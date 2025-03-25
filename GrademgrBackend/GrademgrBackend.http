@@ -1,0 +1,6 @@
+@GrademgrBackend_HostAddress = http://localhost:5052
+
+GET {{GrademgrBackend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
