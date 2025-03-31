@@ -6,8 +6,11 @@ var builder = WebApplication.CreateBuilder(args);
 var mongoDbConnectionString = Environment.GetEnvironmentVariable("MONGODB_URI") ?? "mongodb://localhost:27017";
 
 var mongoClient = new MongoClient(mongoDbConnectionString);
-var db = DatabaseContext.Create(mongoClient.GetDatabase("grade_manager_db"));
+var mongoDatabase = mongoClient.GetDatabase("grade_manager_db");
 
+InitializeDatabase(mongoDatabase);
+
+var db = DatabaseContext.Create(mongoDatabase);
 builder.Services.AddSingleton(db);
 
 builder.Services.AddControllers();
@@ -24,6 +27,20 @@ if (app.Environment.IsDevelopment())
         options.WithTitle("Grade Manager API");
         options.WithSidebar(true);
     });
+}
+
+void InitializeDatabase(IMongoDatabase database)
+{
+    var collections = database.ListCollectionNames().ToList();
+    
+    var requiredCollections = new[] { "users", "courses", "grades", "grade_history" };
+    foreach (var collection in requiredCollections)
+    {
+        if (!collections.Contains(collection))
+        {
+            database.CreateCollection(collection);
+        }
+    }
 }
 
 app.UseHttpsRedirection();
