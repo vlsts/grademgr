@@ -1,0 +1,171 @@
+.dashboard {
+    min-height: 100vh;
+    font-family: 'Roboto', Arial, sans-serif;
+    background-color: #f5f7fa;
+    color: #333;
+    
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem 2rem;
+      background: linear-gradient(135deg, #4a6bff 0%, #2948ff 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      
+      h1 {
+        margin: 0;
+        font-weight: 500;
+        font-size: 1.75rem;
+        letter-spacing: 0.5px;
+      }
+      
+      button {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: none;
+        padding: 0.6rem 1.2rem;
+        border-radius: 50px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        
+        &:hover {
+          background-color: rgba(255, 255, 255, 0.3);
+          transform: translateY(-2px);
+        }
+        
+        &:active {
+          transform: translateY(0);
+        }
+      }
+    }
+    
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    .dashboard-content {
+      h2 {
+        font-size: 1.8rem;
+        margin: 0 0 0.5rem 0;
+        color: #2c3e50;
+      }
+      
+      p {
+        color: #5a6a7e;
+        margin-top: 0;
+        margin-bottom: 2.5rem;
+        font-size: 1.05rem;
+      }
+    }
+    
+    .action-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+      
+      .card {
+        background-color: white;
+        border-radius: 12px;
+        padding: 1.75rem;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+        transition: all 0.3s ease;
+        border-top: 4px solid transparent;
+        
+        &:nth-child(1) {
+          border-top-color: #4a6bff; // Blue for courses
+        }
+        
+        &:nth-child(2) {
+          border-top-color: #ff6b6b; // Red for grades
+        }
+        
+        &:nth-child(3) {
+          border-top-color: #46c93a; // Green for students
+        }
+        
+        &:hover {
+          transform: translateY(-6px);
+          box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        h3 {
+          margin-top: 0;
+          font-size: 1.4rem;
+          color: #2c3e50;
+          margin-bottom: 0.75rem;
+        }
+        
+        p {
+          color: #5a6a7e;
+          margin-bottom: 1.5rem;
+          line-height: 1.5;
+        }
+        
+        button {
+          width: 100%;
+          background-color: #f7f9fc;
+          color: #4a6bff;
+          border: 1px solid #e1e7ef;
+          border-radius: 8px;
+          padding: 0.75rem 0;
+          font-weight: 500;
+          font-size: 1rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          
+          &:hover {
+            background-color: #4a6bff;
+            color: white;
+            border-color: #4a6bff;
+          }
+        }
+      }
+    }
+    
+    // Make the design responsive
+    @media (max-width: 768px) {
+      header {
+        padding: 1rem 1.5rem;
+        
+        h1 {
+          font-size: 1.4rem;
+        }
+        
+        button {
+          padding: 0.5rem 1rem;
+          font-size: 0.85rem;
+        }
+      }
+      
+      main {
+        padding: 1.5rem;
+      }
+      
+      .dashboard-content {
+        h2 {
+          font-size: 1.6rem;
+        }
+        
+        p {
+          font-size: 0.95rem;
+        }
+      }
+      
+      .action-cards {
+        grid-template-columns: 1fr;
+        
+        .card {
+          padding: 1.5rem;
+          
+          h3 {
+            font-size: 1.25rem;
+          }
+        }
+      }
+    }
+  }
