@@ -58,6 +58,9 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Register course service
+builder.Services.AddScoped<ICourseService, CourseService>();
+
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
