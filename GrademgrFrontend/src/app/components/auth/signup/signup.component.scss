@@ -1,0 +1,115 @@
+// Variables
+$primary-color: #3f51b5;
+$primary-color-dark: #303f9f;  // Darker version 
+$primary-color-darker: #1a237e;  // Even darker version
+$error-color: #f44336;
+$error-color-light: #ffebee;  // Light version
+$error-color-dark: #c62828;  // Dark version
+$shadow-color: rgba(0, 0, 0, 0.1);
+$border-radius: 4px;
+$transition-speed: 0.3s;
+
+.signup-container {
+  max-width: 400px;
+  margin: 50px auto;
+  padding: 30px;
+  background-color: #fff;
+  border-radius: $border-radius;
+  box-shadow: 0 4px 20px $shadow-color;
+  
+  h2 {
+    margin-top: 0;
+    margin-bottom: 25px;
+    color: $primary-color;
+    font-size: 24px;
+    font-weight: 500;
+    text-align: center;
+  }
+  
+  .error {
+    padding: 12px;
+    margin-bottom: 20px;
+    background-color: $error-color-light;
+    border-left: 4px solid $error-color;
+    color: $error-color-dark;
+    border-radius: $border-radius;
+    font-size: 14px;
+  }
+
+  .success {
+    padding: 12px;
+    margin-bottom: 20px;
+    background-color: #e8f5e9; // Light green
+    border-left: 4px solid #4caf50; // Green
+    color: #388e3c; // Dark green
+    border-radius: $border-radius;
+    font-size: 14px;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #333;
+    }
+    
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: $border-radius;
+      font-size: 16px;
+      transition: border-color $transition-speed, box-shadow $transition-speed;
+      
+      &:focus {
+        outline: none;
+        border-color: $primary-color;
+        box-shadow: 0 0 0 2px rgba($primary-color, 0.2);
+      }
+    }
+    
+    .validation-error {
+      margin-top: 6px;
+      font-size: 13px;
+      color: $error-color;
+    }
+  }
+  
+  button {
+    width: 100%;
+    padding: 12px;
+    background-color: $primary-color;
+    border: none;
+    border-radius: $border-radius;
+    color: white;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color $transition-speed;
+    
+    &:hover {
+      background-color: $primary-color-dark;
+    }
+    
+    &:active {
+      background-color: $primary-color-darker;
+    }
+    
+    &:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// Responsive styles
+@media (max-width: 480px) {
+  .signup-container {
+    margin: 20px auto;
+    padding: 20px;
+    width: 90%;
+  }
+}
