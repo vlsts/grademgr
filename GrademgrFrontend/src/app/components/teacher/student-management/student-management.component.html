@@ -1,0 +1,94 @@
+<div class="student-management">
+    <header>
+      <h1>Student Management</h1>
+      <div class="actions">
+        <button class="back-button" (click)="backToDashboard()">Back to Dashboard</button>
+      </div>
+    </header>
+  
+    <main>
+      <!-- Messages -->
+      <div *ngIf="errorMessage" class="error-container">
+        {{ errorMessage }}
+      </div>
+      <div *ngIf="successMessage" class="success-container">
+        {{ successMessage }}
+      </div>
+  
+      <!-- Loading state -->
+      <div *ngIf="isLoading" class="loading">
+        <div class="spinner"></div>
+        <p>Loading...</p>
+      </div>
+  
+      <!-- Course List (when no course is selected) -->
+      <div *ngIf="!isLoading && !selectedCourse" class="course-selection">
+        <h2>Select a Course to Manage Students</h2>
+        
+        <!-- Empty state for courses -->
+        <div *ngIf="courses.length === 0" class="empty-state">
+          <div class="icon">📚</div>
+          <h3>No courses found</h3>
+          <p>You need to create courses before you can manage students.</p>
+        </div>
+  
+        <!-- Course cards -->
+        <div *ngIf="courses.length > 0" class="course-list">
+          <div class="course-card" *ngFor="let course of courses" (click)="selectCourse(course)">
+            <div class="course-header">
+              <h3>{{ course.courseName }}</h3>
+              <span class="code">{{ course.courseCode }}</span>
+            </div>
+            <p class="description">{{ course.description }}</p>
+          </div>
+        </div>
+      </div>
+  
+      <!-- Student List (when a course is selected) -->
+      <div *ngIf="!isLoading && selectedCourse" class="student-list-container">
+        <div class="course-header-bar">
+          <button class="back-link" (click)="backToCourseList()">
+            ← Back to Courses
+          </button>
+          <h2>{{ selectedCourse.courseName }} ({{ selectedCourse.courseCode }}) - Students</h2>
+        </div>
+  
+        <!-- Empty state for students -->
+        <div *ngIf="students.length === 0" class="empty-state">
+          <div class="icon">👥</div>
+          <h3>No students enrolled</h3>
+          <p>This course doesn't have any students enrolled yet.</p>
+        </div>
+  
+        <!-- Student table -->
+        <div *ngIf="students.length > 0" class="student-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Username</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let student of students">
+                <td>{{ student.fullName }}</td>
+                <td>{{ student.email }}</td>
+                <td>{{ student.username }}</td>
+                <td class="actions">
+                  <button 
+                    class="remove-button" 
+                    [disabled]="isRemovingStudent"
+                    title="Remove from course" 
+                    (click)="removeStudent(student); $event.stopPropagation()">
+                    <span class="icon">🗑️</span>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
