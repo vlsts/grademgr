@@ -33,6 +33,6 @@ public class User
 
 public enum UserRole
 {
-    Student,
-    Teacher
+    Student = 1,
+    Teacher = 2
 }
