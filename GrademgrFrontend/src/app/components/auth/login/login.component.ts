@@ -21,12 +21,12 @@ export class LoginComponent implements OnInit {
   constructor(
     private formBuilder: FormBuilder,
     private userService: UserService,
-    private router: Router // Inject Router
+    private router: Router
   ) {}
 
   ngOnInit(): void {
     this.loginForm = this.formBuilder.group({
-      username: ['', [Validators.required]],
+      email: ['', [Validators.required]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
   }
@@ -40,12 +40,21 @@ export class LoginComponent implements OnInit {
       return;
     }
 
-    const username = this.f['username'].value;
+    const email = this.f['email'].value;
     const password = this.f['password'].value;
 
-    this.userService.login(username, password).subscribe({
+    this.userService.login(email, password).subscribe({
       next: response => {
         console.log('Login successful', response);
+        localStorage.setItem('token', response.token);
+        console.log('Token:', response.token);
+        console.log('Role:', response.role);
+        if (response.role === 'Teacher') {
+          this.router.navigate(['/teacher/dashboard']);
+        }
+        else {
+          this.router.navigate(['/student/dashboard']);
+        }
       },
       error: err => {
         this.errorMessage = 'Login failed. Please check your credentials.';
