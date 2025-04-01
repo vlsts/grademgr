@@ -5,13 +5,13 @@
     
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
       <div class="form-group">
-        <label for="username">Username</label>
+        <label for="email">Email</label>
         <input 
           type="text" 
-          id="username" 
-          formControlName="username">
-        <div *ngIf="submitted && f['username'].errors" class="validation-error">
-          <div *ngIf="f['username'].errors['required']">Username is required</div>
+          id="email" 
+          formControlName="email">
+        <div *ngIf="submitted && f['email'].errors" class="validation-error">
+          <div *ngIf="f['email'].errors['required']">Email is required</div>
         </div>
       </div>
       

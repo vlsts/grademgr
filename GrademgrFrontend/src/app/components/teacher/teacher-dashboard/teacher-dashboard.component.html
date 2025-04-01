@@ -1,0 +1,33 @@
+<div class="dashboard">
+    <header>
+      <h1>Teacher Dashboard</h1>
+      <button (click)="logout()">Logout</button>
+    </header>
+    
+    <main>
+      <section class="dashboard-content">
+        <h2>Welcome, Teacher!</h2>
+        <p>This is your teacher dashboard where you can manage courses, grades, and students.</p>
+        
+        <div class="action-cards">
+          <div class="card">
+            <h3>Manage Courses</h3>
+            <p>Create, edit, and manage your courses</p>
+            <button (click)="navigateToCourses()">View Courses</button>
+          </div>
+          
+          <div class="card">
+            <h3>Manage Grades</h3>
+            <p>Assign and update student grades</p>
+            <button (click)="navigateToGrades()">Grade Management</button>
+          </div>
+          
+          <div class="card">
+            <h3>View Students</h3>
+            <p>See all students enrolled in your courses</p>
+            <button (click)="navigateToStudents()">Student List</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
