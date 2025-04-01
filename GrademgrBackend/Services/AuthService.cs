@@ -65,7 +65,8 @@ public class AuthService : IAuthService
 
         return new LoginResponse
         {
-            Token = token
+            Token = token,
+            Role = user.Role.ToString()
         };
     }
 
