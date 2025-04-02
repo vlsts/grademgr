@@ -50,3 +50,38 @@ public class GradeHistory
     [BsonElement("changeReason")]
     public string ChangeReason { get; set; }
 }
+
+public class GradeRequest
+{
+    [Range(0, 100)]
+    public decimal GradeValue { get; set; }
+
+    public string AssignmentName { get; set; }
+}
+
+public class AddGradeRequest : GradeRequest
+{
+    public string StudentMail { get; set; }
+}
+
+public class GradeWithStudentInfo : Grade
+{
+    public string StudentName { get; set; }
+    public string StudentEmail { get; set; }
+}
+
+public class GradeDetailsDto
+{
+    public string Id { get; set; }
+    public string StudentId { get; set; }
+    public string StudentName { get; set; }
+    public string StudentEmail { get; set; }
+    public string CourseId { get; set; }
+    public string CourseCode { get; set; }
+    public double GradeValue { get; set; }
+    public string AssignmentName { get; set; }
+    public DateTime EnteredAt { get; set; }
+    public string EnteredBy { get; set; }
+    public string TeacherName { get; set; }
+    public string Comment { get; set; }
+}

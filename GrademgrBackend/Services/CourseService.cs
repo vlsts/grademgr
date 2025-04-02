@@ -204,14 +204,234 @@ public class CourseService : ICourseService
     // Student methods
     public async Task<List<Course>> GetStudentCoursesAsync(string studentEmail)
     {
+        // Find the student by email
         var student = await _context.Users
             .FirstOrDefaultAsync(u => u.Email == studentEmail && u.Role == UserRole.Student);
         
         if (student == null)
             return new List<Course>();
-
-        return await _context.Courses
+    
+        // Find courses where the student's ID is in the StudentIds collection
+        var courses = await _context.Courses
             .Where(c => c.StudentIds.Contains(student.Id))
+            .ToListAsync();
+        
+        return courses;
+    }
+
+    // teacher: add student grade to course
+    public async Task<bool> AddGradeToCourseAsync(string courseId, string studentEmail, GradeRequest request, string teacherEmail)
+    {
+        var teacher = await _context.Users
+            .FirstOrDefaultAsync(u => u.Email == teacherEmail && u.Role == UserRole.Teacher);
+        
+        if (teacher == null)
+            return false;
+
+        var course = await _context.Courses
+            .FirstOrDefaultAsync(c => c.Id == courseId && c.TeacherId == teacher.Id);
+
+        if (course == null)
+            return false;
+
+        // Check if student exists
+        var student = await _context.Users
+            .FirstOrDefaultAsync(u => u.Email == studentEmail && u.Role == UserRole.Student);
+
+        if (student == null)
+            return false;
+
+        // Check if student is in course
+        if (!course.StudentIds.Contains(student.Id))
+            return false;  // Student not in course
+
+        var grade = new Grade
+        {
+            Id = ObjectId.GenerateNewId().ToString(),
+            CourseId = courseId,
+            StudentId = student.Id,
+            GradeValue = request.GradeValue,
+            AssignmentName = request.AssignmentName,
+            EnteredAt = DateTime.UtcNow,
+            EnteredBy = teacher.Id
+        };
+
+        _context.Grades.Add(grade);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    // teacher: get all student grades for course
+
+    public async Task<List<GradeWithStudentInfo>> GetGradesForCourseAsync(string courseId, string teacherEmail)
+    {
+        var teacher = await _context.Users
+            .FirstOrDefaultAsync(u => u.Email == teacherEmail && u.Role == UserRole.Teacher);
+        
+        if (teacher == null)
+            return new List<GradeWithStudentInfo>();
+
+        var course = await _context.Courses
+            .FirstOrDefaultAsync(c => c.Id == courseId && c.TeacherId == teacher.Id);
+
+        if (course == null)
+            return new List<GradeWithStudentInfo>();
+
+        var grades = await _context.Grades
+            .Where(g => g.CourseId == courseId)
+            .ToListAsync();
+            
+        var studentIds = grades.Select(g => g.StudentId).Distinct().ToList();
+        var students = await _context.Users
+            .Where(u => studentIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => u);
+            
+        return grades.Select(g => new GradeWithStudentInfo
+        {
+            Id = g.Id,
+            CourseId = g.CourseId,
+            StudentId = g.StudentId,
+            StudentName = students.ContainsKey(g.StudentId) ? students[g.StudentId].FullName : "Unknown",
+            StudentEmail = students.ContainsKey(g.StudentId) ? students[g.StudentId].Email : "Unknown",
+            GradeValue = g.GradeValue,
+            AssignmentName = g.AssignmentName,
+            EnteredAt = g.EnteredAt,
+            EnteredBy = g.EnteredBy
+        }).ToList();
+    }
+
+    // teacher: delete grade from course
+
+    public async Task<bool> DeleteGradeFromCourseAsync(string courseId, string gradeId, string teacherEmail)
+    {
+        var teacher = await _context.Users
+            .FirstOrDefaultAsync(u => u.Email == teacherEmail && u.Role == UserRole.Teacher);
+        
+        if (teacher == null)
+            return false;
+
+        var course = await _context.Courses
+            .FirstOrDefaultAsync(c => c.Id == courseId && c.TeacherId == teacher.Id);
+
+        if (course == null)
+            return false;
+
+        var grade = await _context.Grades
+            .FirstOrDefaultAsync(g => g.Id == gradeId && g.CourseId == courseId);
+
+        if (grade == null)
+            return false;
+
+        _context.Grades.Remove(grade);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+
+    // student: get all grades for all courses
+
+    public async Task<List<GradeDetailsDto>> GetGradesForStudentAsync(string studentEmail)
+    {
+        try
+        {
+            // Create a new list to hold the results
+            var result = new List<GradeDetailsDto>();
+            
+            // Step 1: Get the student by email (wait for this to complete)
+            var student = await _context.Users
+                .AsNoTracking() // Use no tracking for read-only operations
+                .FirstOrDefaultAsync(u => u.Email == studentEmail && u.Role == UserRole.Student);
+                
+            if (student == null)
+                return result; // Return empty list if student not found
+                
+            // Step 2: Get all courses for this student (wait for this to complete)
+            var studentCourses = await _context.Courses
+                .AsNoTracking()
+                .Where(c => c.StudentIds.Contains(student.Id))
+                .ToListAsync();
+                
+            if (!studentCourses.Any())
+                return result; // Return empty list if no courses
+                
+            // Step 3: Get all courseIds (in memory operation, no DB query)
+            var courseIds = studentCourses.Select(c => c.Id).ToList();
+            
+            // Step 4: Get all grades for this student across all their courses (wait for this to complete)
+            var studentGrades = await _context.Grades
+                .AsNoTracking()
+                .Where(g => g.StudentId == student.Id && courseIds.Contains(g.CourseId))
+                .ToListAsync();
+                
+            if (!studentGrades.Any())
+                return result; // Return empty list if no grades
+                
+            // Step 5: Get teacher IDs (in memory operation, no DB query)
+            var teacherIds = studentGrades
+                .Select(g => g.EnteredBy)
+                .Distinct()
+                .ToList();
+                
+            // Step 6: Get all teachers in one query (wait for this to complete)
+            var teachers = await _context.Users
+                .AsNoTracking()
+                .Where(u => teacherIds.Contains(u.Id) && u.Role == UserRole.Teacher)
+                .ToDictionaryAsync(t => t.Id, t => t.FullName);
+                
+            // Step 7: Build the DTOs (in memory operation, no DB query)
+            foreach (var grade in studentGrades)
+            {
+                var course = studentCourses.FirstOrDefault(c => c.Id == grade.CourseId);
+                
+                var dto = new GradeDetailsDto
+                {
+                    Id = grade.Id,
+                    StudentId = student.Id,
+                    StudentName = student.FullName,
+                    StudentEmail = student.Email,
+                    CourseId = grade.CourseId,
+                    CourseCode = course?.CourseCode ?? "Unknown Course",
+                    GradeValue = (double) grade.GradeValue,
+                    AssignmentName = grade.AssignmentName,
+                    EnteredAt = grade.EnteredAt,
+                    EnteredBy = grade.EnteredBy,
+                    // Look up teacher name from our dictionary, or use "Unknown" if not found
+                    TeacherName = teachers.TryGetValue(grade.EnteredBy, out var teacherName) ? teacherName : "Unknown Teacher",
+                    // TODO: comment
+                    Comment = grade.AssignmentName
+                };
+                
+                result.Add(dto);
+            }
+            
+            return result;
+        }
+        catch (Exception ex)
+        {
+            // Log the exception details for debugging
+            System.Diagnostics.Debug.WriteLine($"Exception in GetGradesForStudentAsync: {ex}");
+            throw; // Re-throw the exception after logging
+        }
+    }
+
+    // student: get all grades for course
+
+    public async Task<List<Grade>> GetGradesForCourseAsStudentAsync(string courseId, string studentEmail)
+    {
+        var student = await _context.Users
+            .FirstOrDefaultAsync(u => u.Email == studentEmail && u.Role == UserRole.Student);
+        
+        if (student == null)
+            return new List<Grade>();
+
+        var course = await _context.Courses
+            .FirstOrDefaultAsync(c => c.Id == courseId && c.StudentIds.Contains(student.Id));
+
+        if (course == null)
+            return new List<Grade>();
+
+        return await _context.Grades
+            .Where(g => g.CourseId == courseId && g.StudentId == student.Id)
             .ToListAsync();
     }
 }
