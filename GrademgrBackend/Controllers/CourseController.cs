@@ -117,4 +117,90 @@ public class CourseController : ControllerBase
             
         return Ok(courseDetails);
     }
+
+    // teacher: add student grade to course
+    [HttpPost("{courseId}/grades")]
+    [Authorize(Policy = "RequireTeacherRole")]
+    public async Task<IActionResult> AddGradeToCourse(string courseId, [FromBody] AddGradeRequest request)
+    {
+        var teacherEmail = GetUserEmail();
+        var studentEmail = request.StudentMail;
+
+        var result = await _courseService.AddGradeToCourseAsync(courseId, studentEmail, request, teacherEmail);
+        
+        if (!result)
+            return BadRequest(new { message = "Failed to add grade to course" });
+            
+        return Ok(new { message = "Grade added to course" });
+    }
+
+    // teacher: get all student grades for course
+    [HttpGet("{courseId}/grades")]
+    [Authorize(Policy = "RequireTeacherRole")]
+    public async Task<IActionResult> GetGradesForCourse(string courseId)
+    {
+        var teacherEmail = GetUserEmail();
+        var grades = await _courseService.GetGradesForCourseAsync(courseId, teacherEmail);
+        
+        if (grades == null || !grades.Any())
+            return NotFound(new { message = "No grades found for this course" });
+            
+        return Ok(grades);
+    }
+
+    // teacher: delete student grade from course
+    [HttpDelete("{courseId}/grades/{gradeId}")]
+    [Authorize(Policy = "RequireTeacherRole")]
+    public async Task<IActionResult> DeleteGradeFromCourse(string courseId, string gradeId)
+    {
+        var teacherEmail = GetUserEmail();
+        var result = await _courseService.DeleteGradeFromCourseAsync(courseId, gradeId, teacherEmail);
+        
+        if (!result)
+            return NotFound(new { message = "Grade not found or you don't have permission to delete it" });
+            
+        return NoContent();
+    }
+
+    // student: get all grades for course
+    [HttpGet("{courseId}/grades/student")]
+    [Authorize(Policy = "RequireStudentRole")]
+    public async Task<IActionResult> GetGradesForCourseAsStudent(string courseId)
+    {
+        var studentEmail = GetUserEmail();
+        var grades = await _courseService.GetGradesForCourseAsStudentAsync(courseId, studentEmail);
+        
+        if (grades == null || !grades.Any())
+            return NotFound(new { message = "No grades found for this course" });
+            
+        return Ok(grades);
+    }
+
+    // student: get all grades for all courses
+    [HttpGet("grades")]
+    [Authorize(Policy = "RequireStudentRole")]
+    public async Task<IActionResult> GetGradesForStudent()
+    {
+        var studentEmail = GetUserEmail();
+        var grades = await _courseService.GetGradesForStudentAsync(studentEmail);
+        
+        if (grades == null || !grades.Any())
+            return NotFound(new { message = "No grades found for this student" });
+            
+        return Ok(grades);
+    }
+
+    // student: get all courses - renamed to avoid confusion with the route parameter
+    [HttpGet("student/courses")]
+    [Authorize(Policy = "RequireStudentRole")]
+    public async Task<IActionResult> GetCoursesForStudent()
+    {
+        var studentEmail = GetUserEmail();
+        var courses = await _courseService.GetStudentCoursesAsync(studentEmail);
+        
+        if (courses == null || !courses.Any())
+            return NotFound(new { message = "No courses found for this student" });
+            
+        return Ok(courses);
+    }
 }
