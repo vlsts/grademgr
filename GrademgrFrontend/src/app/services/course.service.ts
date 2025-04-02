@@ -57,5 +57,47 @@ export class CourseService {
       headers: this.getAuthHeaders()
     });
   }
+
+  addGrade(courseId: string, studentMail: string, gradeValue: number, assignmentName: string, comment?: string): Observable<any> {
+    const request = { 
+      studentMail,
+      gradeValue,
+      assignmentName,
+      comment
+    };
+    return this.http.post<any>(`${this.apiUrl}/${courseId}/grades`, request, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  getGradesForCourse(courseId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/${courseId}/grades`, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  deleteGrade(courseId: string, gradeId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${courseId}/grades/${gradeId}`, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  getStudentGradesForCourse(courseId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/${courseId}/grades/student`, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  getAllStudentGrades(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/grades`, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  getStudentCourses(): Observable<Course[]> {
+    return this.http.get<Course[]>(`${this.apiUrl}/student/courses`, {
+      headers: this.getAuthHeaders()
+    });
+  }
 }
 

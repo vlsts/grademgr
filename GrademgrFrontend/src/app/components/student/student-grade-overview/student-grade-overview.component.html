@@ -1,0 +1,149 @@
+<div class="dashboard">
+    <header>
+        <h1>My Grades</h1>
+        <button (click)="navigateBack()">Back to Dashboard</button>
+    </header>
+    
+    <main>
+        <div class="course-selection">
+            <h2>Select a Course</h2>
+            <div class="select-container">
+                <select [(ngModel)]="selectedCourseId" (change)="onCourseChange()">
+                    <option [value]="'all'" selected>All Courses</option>
+                    <option *ngFor="let course of courses" [value]="course.id">{{ course.courseCode }}</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="grades-container">
+            <!-- Grades Summary Card -->
+            <div class="card summary-card">
+                <div class="card-header">
+                    <h3>Grade Summary</h3>
+                </div>
+                
+                <div class="summary-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Overall Average</span>
+                        <span class="stat-value">{{ overallAverage | number:'1.2-2' }}</span>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <span class="stat-label">Highest Grade</span>
+                        <span class="stat-value">{{ highestGrade || 'N/A' }}</span>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <span class="stat-label">Recent Grade</span>
+                        <span class="stat-value">{{ recentGrade?.gradeValue || 'N/A' }}</span>
+                        <span class="stat-detail" *ngIf="recentGrade">{{ recentGrade.assignmentName }}</span>
+                    </div>
+                </div>
+                
+                <div class="grade-distribution" *ngIf="hasGrades">
+                    <h4>Grade Distribution</h4>
+                    <div class="grade-bar-container">
+                        <div class="grade-bar" 
+                             *ngFor="let range of gradeRanges" 
+                             [style.height.%]="(range.count / maxRangeCount) * 100"
+                             [class.active]="isInRange(range.min, range.max)">
+                            <span class="grade-bar-value">{{ range.count }}</span>
+                        </div>
+                    </div>
+                    <div class="grade-labels">
+                        <span *ngFor="let range of gradeRanges">{{ range.min }}-{{ range.max }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- All Grades Card -->
+            <div class="card grades-card">
+                <h3>My Grades</h3>
+                
+                <div class="search-container">
+                    <input 
+                        type="text" 
+                        placeholder="Search by course or assignment" 
+                        (keyup)="applyFilter($event)"
+                        class="search-input"
+                    >
+                    <span class="search-icon">🔍</span>
+                </div>
+                
+                <div class="table-container">
+                    <table class="grades-table">
+                        <thead>
+                            <tr>
+                                <th (click)="sort('course')">Course</th>
+                                <th (click)="sort('assignment')">Assignment</th>
+                                <th (click)="sort('grade')">Grade</th>
+                                <th (click)="sort('date')">Date</th>
+                                <th>Feedback</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let grade of filteredGrades">
+                                <td>{{grade.courseCode}}</td>
+                                <td>{{grade.assignmentName}}</td>
+                                <td class="grade-value">{{grade.gradeValue}}</td>
+                                <td>{{grade.enteredAt | date:'short'}}</td>
+                                <td>
+                                    <button class="icon-button view" 
+                                            (click)="viewFeedback(grade)" 
+                                            title="View Feedback"
+                                            *ngIf="grade.comment">
+                                        💬
+                                    </button>
+                                    <span *ngIf="!grade.comment">No feedback</span>
+                                </td>
+                            </tr>
+                            <tr *ngIf="filteredGrades.length === 0">
+                                <td colspan="5" class="no-data">No grades available</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="pagination">
+                    <button (click)="prevPage()" [disabled]="currentPage === 0">Previous</button>
+                    <span>Page {{currentPage + 1}} of {{totalPages}}</span>
+                    <button (click)="nextPage()" [disabled]="currentPage === totalPages - 1">Next</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Feedback Modal -->
+    <div class="modal" *ngIf="selectedFeedback">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Feedback for {{selectedFeedback.assignmentName}}</h3>
+                <button class="close-button" (click)="selectedFeedback = null">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="feedback-details">
+                    <div class="detail-row">
+                        <span class="detail-label">Course:</span>
+                        <span class="detail-value">{{selectedFeedback.courseCode}}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Assignment:</span>
+                        <span class="detail-value">{{selectedFeedback.assignmentName}}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Grade:</span>
+                        <span class="detail-value">{{selectedFeedback.gradeValue}}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Date:</span>
+                        <span class="detail-value">{{selectedFeedback.enteredAt | date:'medium'}}</span>
+                    </div>
+                </div>
+                <div class="feedback-comment">
+                    <h4>Teacher's Comment</h4>
+                    <p>{{selectedFeedback.comment}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
