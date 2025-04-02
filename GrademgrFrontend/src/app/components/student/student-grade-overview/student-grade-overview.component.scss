@@ -1,0 +1,459 @@
+// Variables
+$primary-color: #4a6bff;
+$secondary-color: #2c3e50;
+$light-bg: #f5f7fa;
+$border-color: #e1e7ef;
+$card-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+$header-gradient: linear-gradient(135deg, #4a6bff 0%, #2948ff 100%);
+$border-radius: 8px;
+$spacing: 1rem;
+$success-color: #46c93a;
+$danger-color: #ff6b6b;
+$warning-color: #ffbe0b;
+
+.dashboard {
+    min-height: 100vh;
+    font-family: 'Roboto', Arial, sans-serif;
+    background-color: $light-bg;
+    color: #333;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 2rem;
+    background: $header-gradient;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    
+    h1 {
+        margin: 0;
+        font-weight: 500;
+        font-size: 1.75rem;
+        letter-spacing: 0.5px;
+    }
+    
+    button {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: none;
+        padding: 0.6rem 1.2rem;
+        border-radius: 50px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        
+        &:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+    }
+}
+
+main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.course-selection {
+    margin-bottom: 2rem;
+    
+    h2 {
+        font-size: 1.4rem;
+        margin: 0 0 1rem 0;
+        color: $secondary-color;
+    }
+    
+    .select-container {
+        width: 100%;
+        max-width: 400px;
+    }
+}
+
+select, .search-input {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: $border-radius;
+    border: 1px solid $border-color;
+    font-size: 1rem;
+    color: #333;
+    outline: none;
+}
+
+select {
+    background-color: white;
+    cursor: pointer;
+}
+
+.grades-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    
+    @media (min-width: 992px) {
+        grid-template-columns: 1fr 2fr;
+    }
+}
+
+.card {
+    background-color: white;
+    border-radius: 12px;
+    padding: 1.75rem;
+    box-shadow: $card-shadow;
+    transition: all 0.3s ease;
+    
+    h3 {
+        margin-top: 0;
+        font-size: 1.4rem;
+        color: $secondary-color;
+        margin-bottom: 1.25rem;
+    }
+    
+    &.summary-card {
+        border-top: 4px solid $primary-color;
+    }
+    
+    &.grades-card {
+        border-top: 4px solid $success-color;
+    }
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    
+    h3 {
+        margin: 0;
+    }
+}
+
+.summary-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+    
+    .stat-item {
+        display: flex;
+        flex-direction: column;
+        padding: 1rem;
+        background-color: #f7f9fc;
+        border-radius: $border-radius;
+        border-left: 4px solid $primary-color;
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #5a6a7e;
+        }
+        
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: $secondary-color;
+        }
+        
+        .stat-detail {
+            font-size: 0.85rem;
+            color: #5a6a7e;
+            margin-top: 0.25rem;
+        }
+    }
+}
+
+.grade-distribution {
+    margin-top: 1.5rem;
+    
+    h4 {
+        font-size: 1.1rem;
+        color: $secondary-color;
+        margin-bottom: 1rem;
+    }
+    
+    .grade-bar-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        height: 150px;
+        border-bottom: 1px solid $border-color;
+        margin-bottom: 0.5rem;
+        
+        .grade-bar {
+            width: 18%;
+            background-color: rgba(74, 107, 255, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 0.5rem;
+            position: relative;
+            border-radius: 4px 4px 0 0;
+            transition: all 0.3s ease;
+            min-height: 20px;
+            
+            &.active {
+                background-color: rgba(74, 107, 255, 0.8);
+            }
+            
+            .grade-bar-value {
+                font-size: 0.85rem;
+                font-weight: 600;
+                color: $secondary-color;
+            }
+        }
+    }
+    
+    .grade-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        color: #5a6a7e;
+        
+        span {
+            width: 18%;
+            text-align: center;
+        }
+    }
+}
+
+.search-container {
+    position: relative;
+    margin-bottom: 1.25rem;
+    
+    .search-icon {
+        position: absolute;
+        right: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #5a6a7e;
+    }
+    
+    .search-input {
+        padding-right: 2.5rem;
+    }
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.grades-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: $spacing;
+    
+    th, td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid $border-color;
+    }
+    
+    th {
+        font-weight: 500;
+        color: $secondary-color;
+        cursor: pointer;
+        background-color: #f7f9fc;
+    }
+    
+    tr:hover {
+        background-color: #f7f9fc;
+    }
+    
+    .grade-value {
+        font-weight: 600;
+    }
+}
+
+.icon-button {
+    background: none;
+    border: none;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    margin-left: 0.25rem;
+    
+    &:hover {
+        transform: translateY(-2px);
+    }
+    
+    &.view {
+        background-color: rgba(74, 107, 255, 0.1);
+        color: $primary-color;
+    }
+}
+
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: $spacing;
+    
+    button {
+        background-color: #f7f9fc;
+        color: $primary-color;
+        border: 1px solid $border-color;
+        border-radius: $border-radius;
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        
+        &:hover:not(:disabled) {
+            background-color: $primary-color;
+            color: white;
+            border-color: $primary-color;
+        }
+        
+        &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    }
+}
+
+.no-data {
+    text-align: center;
+    color: #5a6a7e;
+    padding: 1.5rem 0;
+}
+
+// Modal styles
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    
+    .modal-content {
+        background-color: white;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow-y: auto;
+        animation: modalFadeIn 0.3s ease;
+    }
+    
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem;
+        border-bottom: 1px solid $border-color;
+        
+        h3 {
+            margin: 0;
+            font-size: 1.3rem;
+            color: $secondary-color;
+        }
+        
+        .close-button {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #5a6a7e;
+            transition: color 0.2s ease;
+            
+            &:hover {
+                color: $danger-color;
+            }
+        }
+    }
+    
+    .modal-body {
+        padding: 1.5rem;
+    }
+}
+
+.feedback-details {
+    margin-bottom: 1.5rem;
+    
+    .detail-row {
+        display: flex;
+        margin-bottom: 0.75rem;
+        
+        .detail-label {
+            font-weight: 600;
+            width: 100px;
+            color: $secondary-color;
+        }
+        
+        .detail-value {
+            color: #333;
+        }
+    }
+}
+
+.feedback-comment {
+    background-color: #f7f9fc;
+    padding: 1.25rem;
+    border-radius: $border-radius;
+    border-left: 4px solid $primary-color;
+    
+    h4 {
+        margin-top: 0;
+        font-size: 1.1rem;
+        color: $secondary-color;
+        margin-bottom: 0.75rem;
+    }
+    
+    p {
+        margin: 0;
+        line-height: 1.6;
+        white-space: pre-line;
+    }
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    header {
+        padding: 1rem 1.5rem;
+        
+        h1 {
+            font-size: 1.4rem;
+        }
+        
+        button {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+        }
+    }
+    
+    main {
+        padding: 1.5rem;
+    }
+    
+    .card {
+        padding: 1.25rem;
+        
+        h3 {
+            font-size: 1.25rem;
+        }
+    }
+    
+    .grades-container {
+        grid-template-columns: 1fr;
+    }
+}
