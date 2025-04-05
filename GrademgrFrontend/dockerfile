@@ -1,0 +1,23 @@
+FROM oven/bun:alpine as build
+
+WORKDIR /app
+
+RUN apk add --no-cache nodejs
+
+COPY . .
+
+RUN bun i
+
+ENV BACKEND_URL=""
+
+RUN bun run build
+
+FROM oven/bun:alpine as runner
+
+COPY --from=build /app/dist/grademgr-frontend/browser /app/dist
+
+RUN bun i -g serve
+
+CMD [ "serve", "-l", "4200", "/app/dist" ]
+
+EXPOSE 4200
