@@ -1,0 +1,15 @@
+FROM alpine:latest
+
+WORKDIR /app
+
+RUN apk add --no-cache dotnet9-sdk
+
+COPY . .
+
+RUN dotnet restore
+
+ENV MONGODB_URI="mongodb://root:root@mongo/"
+
+CMD [ "dotnet", "run" ]
+
+EXPOSE 5052
