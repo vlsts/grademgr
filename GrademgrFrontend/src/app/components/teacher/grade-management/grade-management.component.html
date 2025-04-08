@@ -305,6 +305,7 @@
                                 <td>{{grade.gradeValue}}</td>
                                 <td>{{grade.enteredAt | date:'short'}}</td>
                                 <td class="actions">
+                                    <button class="icon-button edit" (click)="editGrade(grade)" title="Edit Grade">✏️</button>
                                     <button class="icon-button delete" (click)="deleteGrade(grade.id)" title="Delete Grade">🗑️</button>
                                 </td>
                             </tr>
@@ -321,6 +322,152 @@
                     <button (click)="nextPage()" [disabled]="currentPage === totalPages - 1">Next</button>
                 </div>
             </div>
+
+            <div class="edit-panel" [class.active]="editingGrade !== null">
+                <div class="panel-header">
+                    <h3>Edit Grade</h3>
+                    <button class="close-button" (click)="cancelEdit()">×</button>
+                </div>
+                <div class="panel-content" *ngIf="editingGrade">
+                    <div class="student-info">
+                        <div class="info-row">
+                            <span class="label">Student:</span>
+                            <span class="value">{{editingGrade.studentName}}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Email:</span>
+                            <span class="value">{{editingGrade.studentEmail}}</span>
+                        </div>
+                    </div>
+            
+                    <form (ngSubmit)="saveGradeEdit()">
+                        <div class="form-group">
+                            <label for="editAssignmentName">Assignment Name <span class="required">*</span></label>
+                            <input 
+                                type="text" 
+                                id="editAssignmentName" 
+                                [(ngModel)]="editingGrade.assignmentName" 
+                                name="assignmentName"
+                                required
+                                [class.invalid]="!editingGrade.assignmentName">
+                            <div class="error-message" *ngIf="!editingGrade.assignmentName">
+                                Assignment name is required
+                            </div>
+                        </div>
+            
+                        <div class="form-group">
+                            <label for="editGradeValue">Grade <span class="required">*</span></label>
+                            <div class="grade-input-container">
+                                <input 
+                                    type="number" 
+                                    id="editGradeValue" 
+                                    [(ngModel)]="editingGrade.gradeValue" 
+                                    name="gradeValue"
+                                    required
+                                    min="0"
+                                    max="10"
+                                    step="0.1"
+                                    [class.invalid]="editingGrade.gradeValue < 0 || editingGrade.gradeValue > 10">
+                                <span class="grade-hint">Range: 0-10</span>
+                            </div>
+                            <div class="error-message" *ngIf="editingGrade.gradeValue < 0 || editingGrade.gradeValue > 10">
+                                Grade must be between 0 and 10
+                            </div>
+                        </div>
+            
+                        <div class="form-group">
+                            <label for="editComment">Comment</label>
+                            <textarea 
+                                id="editComment" 
+                                [(ngModel)]="editingGrade.comment" 
+                                name="comment"
+                                rows="3"></textarea>
+                        </div>
+            
+                        <div class="form-group">
+                            <label for="changeReason">Reason for Change <span class="required">*</span></label>
+                            <textarea 
+                                id="changeReason" 
+                                [(ngModel)]="changeReason" 
+                                name="changeReason"
+                                required
+                                rows="2"
+                                [class.invalid]="!changeReason"></textarea>
+                            <div class="error-message" *ngIf="!changeReason">
+                                Please provide a reason for the change
+                            </div>
+                        </div>
+            
+                        <div class="form-actions">
+                            <button 
+                                type="button" 
+                                class="cancel-button" 
+                                (click)="cancelEdit()">Cancel</button>
+                            <button 
+                                type="submit" 
+                                class="save-button" 
+                                [disabled]="isUpdating">
+                                <span *ngIf="isUpdating" class="spinner"></span>
+                                <span>{{ isUpdating ? 'Saving...' : 'Save Changes' }}</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        
+            <!-- Overlay for when edit panel is active -->
+            <div class="overlay" *ngIf="editingGrade !== null" (click)="cancelEdit()"></div>           
+
+            <!-- <div *ngIf="editingGrade" class="card edit-grade-card">
+                <div class="card-header">
+                    <h3>Edit Grade</h3>
+                </div>
+                <form (ngSubmit)="saveGradeEdit()" class="edit-grade-form">
+                    <div class="form-group">
+                        <label for="assignmentName">Assignment Name</label>
+                        <input
+                            type="text"
+                            id="assignmentName"
+                            [(ngModel)]="editingGrade.assignmentName"
+                            name="assignmentName"
+                            required
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label for="gradeValue">Grade Value</label>
+                        <input
+                            type="number"
+                            id="gradeValue"
+                            [(ngModel)]="editingGrade.gradeValue"
+                            name="gradeValue"
+                            min="0"
+                            max="10"
+                            required
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label for="comment">Comment</label>
+                        <textarea
+                            id="comment"
+                            [(ngModel)]="editingGrade.comment"
+                            name="comment"
+                        ></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="changeReason">Change Reason</label>
+                        <textarea
+                            id="changeReason"
+                            [(ngModel)]="changeReason"
+                            name="changeReason"
+                            required
+                        ></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="save-button">Save</button>
+                        <button type="button" class="cancel-button" (click)="cancelEdit()">Cancel</button>
+                    </div>
+                </form>
+            </div> -->
         </div>
     </main>
 </div>

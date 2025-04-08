@@ -48,27 +48,32 @@ interface Course {
   styleUrls: ['./grade-management.component.scss']
 })
 export class GradeManagementComponent implements OnInit {
+
+  editingGrade: Grade | null = null;
+  changeReason: string = '';
+  isUpdating: boolean = false;
+
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
   csvFile: File | null = null;
   csvPreviewCount: number = 0;
   isDragOver: boolean = false;
   csvGrades: PendingGrade[] = [];
-  
+
   courses: Course[] = [];
   selectedCourseId: string | null = null;
   grades: Grade[] = [];
   filteredGrades: Grade[] = [];
   pendingGrades: PendingGrade[] = [];
-  
+
   // Pagination
   currentPage = 0;
   pageSize = 5;
   totalPages = 0;
-  
+
   // Sorting
   sortField = 'date';
   sortDirection = 'desc';
-  
+
   // Form data
   newGrade: NewGrade = {
     studentEmail: '',
@@ -76,12 +81,12 @@ export class GradeManagementComponent implements OnInit {
     grade: 0,
     comment: ''
   };
-  
+
   // Loading and error states
   isLoading = false;
   error = '';
   success = '';
-  
+
   // Store original values during edit
   private editingGradeBackup: PendingGrade | null = null;
 
@@ -167,7 +172,7 @@ export class GradeManagementComponent implements OnInit {
     if (!this.selectedCourseId || !this.newGrade.studentEmail || !this.newGrade.grade || !this.newGrade.assignmentName) {
       return;
     }
-    
+
     // Add to pending grades
     this.pendingGrades.push({
       studentEmail: this.newGrade.studentEmail,
@@ -176,10 +181,10 @@ export class GradeManagementComponent implements OnInit {
       comment: this.newGrade.comment,
       isHighlighted: true
     });
-    
+
     // Reset form
     this.resetForm();
-    
+
     // Remove highlight after 2 seconds
     const index = this.pendingGrades.length - 1;
     setTimeout(() => {
@@ -187,7 +192,7 @@ export class GradeManagementComponent implements OnInit {
         this.pendingGrades[index].isHighlighted = false;
       }
     }, 2000);
-    
+
     // Show success
     this.success = 'Grade added to batch';
     setTimeout(() => {
@@ -196,7 +201,7 @@ export class GradeManagementComponent implements OnInit {
       }
     }, 3000);
   }
-  
+
   // Start editing a pending grade
   editPendingGrade(index: number): void {
     // First, cancel any other editing that might be in progress
@@ -205,10 +210,10 @@ export class GradeManagementComponent implements OnInit {
         this.cancelPendingGradeEdit(i);
       }
     });
-    
+
     // Make a backup of the original values
     this.editingGradeBackup = { ...this.pendingGrades[index] };
-    
+
     // Set the grade to editing mode
     this.pendingGrades[index].isEditing = true;
   }
@@ -217,15 +222,15 @@ export class GradeManagementComponent implements OnInit {
   savePendingGradeEdit(index: number): void {
     // Validate the data
     const grade = this.pendingGrades[index];
-    
+
     if (!grade.studentEmail || !grade.assignmentName || !grade.grade || grade.grade < 0) {
       this.error = 'Please fill in all required fields with valid values';
       return;
     }
-    
+
     // Exit editing mode
     grade.isEditing = false;
-    
+
     // Highlight the row briefly to show it was updated
     grade.isHighlighted = true;
     setTimeout(() => {
@@ -233,10 +238,10 @@ export class GradeManagementComponent implements OnInit {
         this.pendingGrades[index].isHighlighted = false;
       }
     }, 2000);
-    
+
     // Clear backup
     this.editingGradeBackup = null;
-    
+
     // Show success message
     this.success = 'Grade updated in batch';
     setTimeout(() => {
@@ -252,10 +257,10 @@ export class GradeManagementComponent implements OnInit {
       // Restore the original values
       this.pendingGrades[index] = { ...this.editingGradeBackup };
     }
-    
+
     // Exit editing mode
     this.pendingGrades[index].isEditing = false;
-    
+
     // Clear backup
     this.editingGradeBackup = null;
   }
@@ -283,12 +288,12 @@ export class GradeManagementComponent implements OnInit {
     if (!this.selectedCourseId || this.pendingGrades.length === 0) {
       return;
     }
-    
+
     if (confirm(`Are you sure you want to submit ${this.pendingGrades.length} grades?`)) {
       this.isLoading = true;
       this.error = '';
       this.success = '';
-      
+
       // Prepare grades in the format expected by the API
       const gradesToSubmit = this.pendingGrades.map(grade => ({
         studentMail: grade.studentEmail,
@@ -296,7 +301,7 @@ export class GradeManagementComponent implements OnInit {
         assignmentName: grade.assignmentName,
         comment: grade.comment
       }));
-      
+
       this.courseService.addMultipleGrades(this.selectedCourseId, gradesToSubmit)
         .subscribe({
           next: (response) => {
@@ -309,7 +314,7 @@ export class GradeManagementComponent implements OnInit {
             } else {
               this.success = `Grades submitted successfully`;
             }
-            
+
             this.pendingGrades = [];
             this.loadGrades(this.selectedCourseId!);
             this.isLoading = false;
@@ -338,7 +343,7 @@ export class GradeManagementComponent implements OnInit {
       this.isLoading = true;
       this.error = '';
       this.success = '';
-      
+
       this.courseService.deleteGrade(this.selectedCourseId!, id)
         .subscribe({
           next: () => {
@@ -383,35 +388,35 @@ export class GradeManagementComponent implements OnInit {
     // Sort first
     const sorted = [...this.grades].sort((a, b) => {
       if (this.sortField === 'name') {
-        return this.sortDirection === 'asc' 
-          ? a.studentName.localeCompare(b.studentName) 
+        return this.sortDirection === 'asc'
+          ? a.studentName.localeCompare(b.studentName)
           : b.studentName.localeCompare(a.studentName);
       }
-      
+
       if (this.sortField === 'email') {
-        return this.sortDirection === 'asc' 
-          ? a.studentEmail.localeCompare(b.studentEmail) 
+        return this.sortDirection === 'asc'
+          ? a.studentEmail.localeCompare(b.studentEmail)
           : b.studentEmail.localeCompare(a.studentEmail);
       }
-      
+
       if (this.sortField === 'assignment') {
-        return this.sortDirection === 'asc' 
-          ? a.assignmentName.localeCompare(b.assignmentName) 
+        return this.sortDirection === 'asc'
+          ? a.assignmentName.localeCompare(b.assignmentName)
           : b.assignmentName.localeCompare(a.assignmentName);
       }
-      
+
       if (this.sortField === 'grade') {
-        return this.sortDirection === 'asc' 
-          ? a.gradeValue - b.gradeValue 
+        return this.sortDirection === 'asc'
+          ? a.gradeValue - b.gradeValue
           : b.gradeValue - a.gradeValue;
       }
-      
+
       // Default: sort by date
-      return this.sortDirection === 'asc' 
-        ? new Date(a.enteredAt).getTime() - new Date(b.enteredAt).getTime() 
+      return this.sortDirection === 'asc'
+        ? new Date(a.enteredAt).getTime() - new Date(b.enteredAt).getTime()
         : new Date(b.enteredAt).getTime() - new Date(a.enteredAt).getTime();
     });
-    
+
     // Then paginate
     const start = this.currentPage * this.pageSize;
     this.filteredGrades = sorted.slice(start, start + this.pageSize);
@@ -425,25 +430,25 @@ export class GradeManagementComponent implements OnInit {
       this.sortField = field;
       this.sortDirection = 'asc';
     }
-    
+
     this.filterAndPaginateGrades();
   }
 
   // Apply search filter
   applyFilter(event: Event): void {
     const filterValue = (event.target as HTMLInputElement).value.toLowerCase().trim();
-    
+
     if (filterValue === '') {
       this.filterAndPaginateGrades();
       return;
     }
-    
+
     const filtered = this.grades.filter(grade => {
       return grade.studentName.toLowerCase().includes(filterValue) ||
-             grade.studentEmail.toLowerCase().includes(filterValue) ||
-             grade.assignmentName.toLowerCase().includes(filterValue);
+        grade.studentEmail.toLowerCase().includes(filterValue) ||
+        grade.assignmentName.toLowerCase().includes(filterValue);
     });
-    
+
     this.filteredGrades = filtered.slice(0, this.pageSize);
     this.totalPages = Math.ceil(filtered.length / this.pageSize);
     this.currentPage = 0;
@@ -454,20 +459,20 @@ export class GradeManagementComponent implements OnInit {
     event.stopPropagation();
     this.isDragOver = true;
   }
-  
+
   // Handle drag leave event
   onDragLeave(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
     this.isDragOver = false;
   }
-  
+
   // Handle file drop event
   onFileDrop(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
     this.isDragOver = false;
-    
+
     if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
       const file = event.dataTransfer.files[0];
       if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
@@ -478,7 +483,7 @@ export class GradeManagementComponent implements OnInit {
       }
     }
   }
-  
+
   // Handle file selection via browser
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -486,41 +491,41 @@ export class GradeManagementComponent implements OnInit {
       this.processCsvFile(input.files[0]);
     }
   }
-  
+
   // Process the CSV file
   processCsvFile(file: File): void {
     this.csvFile = file;
     this.csvGrades = [];
-    
+
     // Read the file
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const csvText = e.target?.result as string;
         const rows = csvText.split('\n').filter(row => row.trim() !== '');
-        
+
         // Process each row
         rows.forEach((row, index) => {
           // Skip header row if it exists
           if (index === 0 && row.toLowerCase().includes('email')) {
             return;
           }
-          
+
           const columns = row.split(',').map(col => col.trim());
           if (columns.length < 3) {
             return; // Skip invalid rows
           }
-          
+
           const studentEmail = columns[0];
           const assignmentName = columns[1];
           const gradeValue = parseFloat(columns[2]);
           const comment = columns.length > 3 ? columns[3] : '';
-          
+
           // Validate the data
           if (!studentEmail || !assignmentName || isNaN(gradeValue) || gradeValue < 1 || gradeValue > 10) {
             return; // Skip invalid data
           }
-          
+
           // Add to the grades array
           this.csvGrades.push({
             studentEmail,
@@ -529,17 +534,17 @@ export class GradeManagementComponent implements OnInit {
             comment
           });
         });
-        
+
         // Update the preview count
         this.csvPreviewCount = this.csvGrades.length;
-        
+
         // Show error if no valid grades were found
         if (this.csvPreviewCount === 0) {
           this.error = 'No valid grade entries found in the CSV file.';
           this.csvFile = null;
           setTimeout(() => this.error = '', 5000);
         }
-        
+
       } catch (error) {
         console.error('Error processing CSV:', error);
         this.error = 'Error processing CSV file. Please check the format.';
@@ -548,16 +553,16 @@ export class GradeManagementComponent implements OnInit {
         this.csvPreviewCount = 0;
       }
     };
-    
+
     reader.onerror = () => {
       this.error = 'Error reading the file. Please try again.';
       setTimeout(() => this.error = '', 5000);
       this.csvFile = null;
     };
-    
+
     reader.readAsText(file);
   }
-  
+
   // Remove the selected CSV file
   removeCsvFile(): void {
     this.csvFile = null;
@@ -567,7 +572,7 @@ export class GradeManagementComponent implements OnInit {
       this.fileInput.nativeElement.value = '';
     }
   }
-  
+
   // Format file size for display
   formatFileSize(bytes: number): string {
     if (bytes < 1024) {
@@ -578,18 +583,18 @@ export class GradeManagementComponent implements OnInit {
       return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     }
   }
-  
+
   // Import the CSV grades
   importCsv(): void {
     if (this.csvGrades.length === 0 || !this.selectedCourseId) {
       return;
     }
-    
+
     if (confirm(`Are you sure you want to import ${this.csvGrades.length} grades?`)) {
       this.isLoading = true;
       this.error = '';
       this.success = '';
-      
+
       // Map the CSV grades to the format expected by the API
       const gradesToSubmit = this.csvGrades.map(grade => ({
         studentMail: grade.studentEmail,
@@ -597,7 +602,7 @@ export class GradeManagementComponent implements OnInit {
         assignmentName: grade.assignmentName,
         comment: grade.comment
       }));
-      
+
       // Submit the grades
       this.courseService.addMultipleGrades(this.selectedCourseId, gradesToSubmit)
         .subscribe({
@@ -611,10 +616,10 @@ export class GradeManagementComponent implements OnInit {
             } else {
               this.success = `Grades imported successfully`;
             }
-            
+
             // Clear the CSV file
             this.removeCsvFile();
-            
+
             // Refresh the grades list
             this.loadGrades(this.selectedCourseId!);
             this.isLoading = false;
@@ -626,4 +631,68 @@ export class GradeManagementComponent implements OnInit {
         });
     }
   }
+
+  editGrade(grade: Grade): void {
+    this.editingGrade = JSON.parse(JSON.stringify(grade));
+    this.changeReason = '';
+  }
+
+  saveGradeEdit(): void {
+    if (!this.editingGrade || !this.selectedCourseId) {
+      return;
+    }
+    
+    if (!this.editingGrade.assignmentName || 
+        this.editingGrade.gradeValue < 0 || 
+        this.editingGrade.gradeValue > 10 ||
+        !this.changeReason) {
+      this.error = 'Please complete all required fields. Grade must be between 0 and 10.';
+      return;
+    }
+    
+    this.isUpdating = true;
+    this.error = '';
+    this.success = '';
+    
+    const updateData = {
+      assignmentName: this.editingGrade.assignmentName,
+      gradeValue: this.editingGrade.gradeValue,
+      comment: this.editingGrade.comment,
+      changeReason: this.changeReason
+    };
+    
+    this.courseService.updateGrade(this.selectedCourseId, this.editingGrade.id, updateData)
+      .subscribe({
+        next: (response) => {
+          this.success = response.message || 'Grade updated successfully';
+          
+          // Reload grades to reflect changes
+          this.loadGrades(this.selectedCourseId!);
+          
+          // Clear editing state
+          this.editingGrade = null;
+          this.changeReason = '';
+          this.isUpdating = false;
+          
+          // Clear success message after a delay
+          setTimeout(() => {
+            if (this.success === 'Grade updated successfully') {
+              this.success = '';
+            }
+          }, 3000);
+        },
+        error: (err) => {
+          this.error = 'Failed to update grade: ' + (err.error?.message || err.message || 'Unknown error');
+          console.error('Error updating grade:', err);
+          this.isUpdating = false;
+        }
+      });
+  }
+  
+  // Cancel editing
+  cancelEdit(): void {
+    this.editingGrade = null;
+    this.changeReason = '';
+  }
+
 }
