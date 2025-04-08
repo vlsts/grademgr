@@ -9,17 +9,30 @@ using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using BC = BCrypt.Net.BCrypt;
 
+/// <summary>
+/// Service handling user authentication, including registration and login functionality.
+/// </summary>
 public class AuthService : IAuthService
 {
     private readonly DatabaseContext _context;
     private readonly IConfiguration _configuration;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuthService"/> class.
+    /// </summary>
+    /// <param name="context">The database context for accessing user data.</param>
+    /// <param name="configuration">Application configuration containing JWT settings.</param>
     public AuthService(DatabaseContext context, IConfiguration configuration)
     {
         _context = context;
         _configuration = configuration;
     }
 
+    /// <summary>
+    /// Registers a new user in the system.
+    /// </summary>
+    /// <param name="model">Registration information containing user details.</param>
+    /// <returns>A response indicating success or failure of the registration process.</returns>
     public async Task<RegisterResponse> RegisterAsync(RegisterRequest model)
     {
         if (await _context.Users.AnyAsync(u => u.Username == model.Username || u.Email == model.Email))
@@ -52,6 +65,12 @@ public class AuthService : IAuthService
         };
     }
 
+    /// <summary>
+    /// Authenticates a user and generates a JWT token for authorized access.
+    /// </summary>
+    /// <param name="model">Login credentials containing email and password.</param>
+    /// <returns>A response containing the authentication token and user role.</returns>
+    /// <exception cref="Exception">Thrown when login credentials are invalid.</exception>
     public async Task<LoginResponse> LoginAsync(LoginRequest model)
     {
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
@@ -70,6 +89,11 @@ public class AuthService : IAuthService
         };
     }
 
+    /// <summary>
+    /// Generates a JWT authentication token for a user.
+    /// </summary>
+    /// <param name="user">The user for whom to generate the token.</param>
+    /// <returns>A JWT token string that can be used for authentication.</returns>
     private string GenerateJwtToken(User user)
     {
         var jwtSettings = _configuration.GetSection("JwtSettings");

@@ -7,16 +7,28 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using BC = BCrypt.Net.BCrypt;
 
+/// <summary>
+/// Service providing security-related functionality including input sanitization, validation,
+/// security checks, password handling, and token validation.
+/// </summary>
 public class SecurityService : ISecurityService
 {
     private readonly IConfiguration _configuration;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SecurityService"/> class.
+    /// </summary>
+    /// <param name="configuration">Application configuration containing security settings.</param>
     public SecurityService(IConfiguration configuration)
     {
         _configuration = configuration;
     }
 
-    // Input Sanitization
+    /// <summary>
+    /// Sanitizes a string by removing potentially dangerous characters.
+    /// </summary>
+    /// <param name="input">The string to sanitize.</param>
+    /// <returns>A sanitized version of the input string.</returns>
     public string SanitizeString(string input)
     {
         if (string.IsNullOrEmpty(input))
@@ -28,6 +40,11 @@ public class SecurityService : ISecurityService
         return input.Trim();
     }
 
+    /// <summary>
+    /// Sanitizes an email address by removing invalid characters and normalizing format.
+    /// </summary>
+    /// <param name="email">The email address to sanitize.</param>
+    /// <returns>A sanitized and normalized version of the email address.</returns>
     public string SanitizeEmail(string email)
     {
         if (string.IsNullOrEmpty(email))
@@ -39,6 +56,11 @@ public class SecurityService : ISecurityService
         return email.Trim().ToLowerInvariant();
     }
 
+    /// <summary>
+    /// Sanitizes a MongoDB ObjectId by validating its format.
+    /// </summary>
+    /// <param name="id">The ObjectId string to sanitize.</param>
+    /// <returns>The validated ObjectId if valid, otherwise null.</returns>
     public string SanitizeMongoId(string id)
     {
         if (string.IsNullOrEmpty(id))
@@ -51,7 +73,11 @@ public class SecurityService : ISecurityService
         return null; // Invalid ObjectId format
     }
     
-    // Validation
+    /// <summary>
+    /// Validates if a string is a properly formatted email address.
+    /// </summary>
+    /// <param name="email">The email address to validate.</param>
+    /// <returns>True if the email is valid; otherwise, false.</returns>
     public bool IsValidEmail(string email)
     {
         if (string.IsNullOrEmpty(email))
@@ -68,6 +94,11 @@ public class SecurityService : ISecurityService
         }
     }
     
+    /// <summary>
+    /// Validates if a string is a properly formatted MongoDB ObjectId.
+    /// </summary>
+    /// <param name="id">The ObjectId string to validate.</param>
+    /// <returns>True if the id is a valid MongoDB ObjectId; otherwise, false.</returns>
     public bool IsValidMongoId(string id)
     {
         if (string.IsNullOrEmpty(id))
@@ -76,7 +107,11 @@ public class SecurityService : ISecurityService
         return Regex.IsMatch(id, @"^[0-9a-fA-F]{24}$");
     }
     
-    // Security Checks
+    /// <summary>
+    /// Checks if a string contains potential MongoDB injection patterns.
+    /// </summary>
+    /// <param name="input">The string to check.</param>
+    /// <returns>True if the input contains injection patterns; otherwise, false.</returns>
     public bool ContainsSqlInjectionPattern(string input)
     {
         if (string.IsNullOrEmpty(input))
@@ -103,6 +138,11 @@ public class SecurityService : ISecurityService
         return false;
     }
     
+    /// <summary>
+    /// Checks if a string contains client-side scripting patterns that could be used for XSS attacks.
+    /// </summary>
+    /// <param name="input">The string to check.</param>
+    /// <returns>True if the input contains scripting patterns; otherwise, false.</returns>
     public bool ContainsScriptingPattern(string input)
     {
         if (string.IsNullOrEmpty(input))
@@ -129,18 +169,32 @@ public class SecurityService : ISecurityService
         return false;
     }
     
-    // Password Handling
+    /// <summary>
+    /// Generates a secure hash of a password using bcrypt.
+    /// </summary>
+    /// <param name="password">The plain text password to hash.</param>
+    /// <returns>A secure hash of the password.</returns>
     public string HashPassword(string password)
     {
         return BC.HashPassword(password);
     }
     
+    /// <summary>
+    /// Verifies that a plain text password matches a previously hashed password.
+    /// </summary>
+    /// <param name="password">The plain text password to check.</param>
+    /// <param name="hash">The hash to verify against.</param>
+    /// <returns>True if the password matches the hash; otherwise, false.</returns>
     public bool VerifyPassword(string password, string hash)
     {
         return BC.Verify(password, hash);
     }
     
-    // Token Validation
+    /// <summary>
+    /// Validates a JWT token for authenticity and expiration.
+    /// </summary>
+    /// <param name="token">The JWT token to validate.</param>
+    /// <returns>True if the token is valid and not expired; otherwise, false.</returns>
     public async Task<bool> IsTokenValidAsync(string token)
     {
         if (string.IsNullOrEmpty(token))
