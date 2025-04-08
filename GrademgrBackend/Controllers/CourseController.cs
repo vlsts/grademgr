@@ -28,6 +28,30 @@ public class CourseController : ControllerBase
         return Enum.Parse<UserRole>(roleString);
     }
 
+    // Helper method to validate and return model state errors
+    private Dictionary<string, string[]> GetModelStateErrors()
+    {
+        return ModelState
+            .Where(x => x.Value.Errors.Count > 0)
+            .ToDictionary(
+                kvp => kvp.Key,
+                kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+            );
+    }
+
+    // Check if model state is valid, return BadRequest if not
+    private IActionResult ValidateModel()
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(new { 
+                message = "Invalid input", 
+                errors = GetModelStateErrors() 
+            });
+        }
+        return null;
+    }
+
     // Teacher Endpoints
     [HttpGet("teacher")]
     [Authorize(Policy = "RequireTeacherRole")]
@@ -42,6 +66,18 @@ public class CourseController : ControllerBase
     [Authorize(Policy = "RequireTeacherRole")]
     public async Task<IActionResult> CreateCourse([FromBody] CreateCourseRequest request)
     {
+        // Validate model
+        var validationResult = ValidateModel();
+        if (validationResult != null)
+            return validationResult;
+            
+        // Additional validations
+        if (string.IsNullOrWhiteSpace(request.CourseName))
+            return BadRequest(new { message = "Course name is required" });
+            
+        if (string.IsNullOrWhiteSpace(request.CourseCode))
+            return BadRequest(new { message = "Course code is required" });
+
         var teacherEmail = GetUserEmail();
         try
         {
@@ -58,6 +94,9 @@ public class CourseController : ControllerBase
     [Authorize(Policy = "RequireTeacherRole")]
     public async Task<IActionResult> DeleteCourse(string id)
     {
+        if (string.IsNullOrWhiteSpace(id))
+            return BadRequest(new { message = "Course ID is required" });
+
         var teacherEmail = GetUserEmail();
         var result = await _courseService.DeleteCourseAsync(id, teacherEmail);
         
@@ -71,6 +110,17 @@ public class CourseController : ControllerBase
     [Authorize(Policy = "RequireTeacherRole")]
     public async Task<IActionResult> AddStudentToCourse(string courseId, [FromBody] AddStudentRequest request)
     {
+        // Validate model
+        var validationResult = ValidateModel();
+        if (validationResult != null)
+            return validationResult;
+            
+        if (string.IsNullOrWhiteSpace(courseId))
+            return BadRequest(new { message = "Course ID is required" });
+            
+        if (string.IsNullOrWhiteSpace(request.StudentEmail) || !IsValidEmail(request.StudentEmail))
+            return BadRequest(new { message = "Valid student email is required" });
+
         var teacherEmail = GetUserEmail();
         var result = await _courseService.AddStudentToCourseAsync(courseId, request.StudentEmail, teacherEmail);
         
@@ -84,6 +134,12 @@ public class CourseController : ControllerBase
     [Authorize(Policy = "RequireTeacherRole")]
     public async Task<IActionResult> RemoveStudentFromCourse(string courseId, string studentEmail)
     {
+        if (string.IsNullOrWhiteSpace(courseId))
+            return BadRequest(new { message = "Course ID is required" });
+            
+        if (string.IsNullOrWhiteSpace(studentEmail) || !IsValidEmail(studentEmail))
+            return BadRequest(new { message = "Valid student email is required" });
+
         var teacherEmail = GetUserEmail();
         var result = await _courseService.RemoveStudentFromCourseAsync(courseId, studentEmail, teacherEmail);
         
@@ -108,6 +164,9 @@ public class CourseController : ControllerBase
     [Authorize]
     public async Task<IActionResult> GetCourseDetails(string id)
     {
+        if (string.IsNullOrWhiteSpace(id))
+            return BadRequest(new { message = "Course ID is required" });
+
         var userEmail = GetUserEmail();
         var userRole = GetUserRole();
         
@@ -124,6 +183,23 @@ public class CourseController : ControllerBase
     [Authorize(Policy = "RequireTeacherRole")]
     public async Task<IActionResult> AddGradeToCourse(string courseId, [FromBody] AddGradeRequest request)
     {
+        // Validate model
+        var validationResult = ValidateModel();
+        if (validationResult != null)
+            return validationResult;
+            
+        if (string.IsNullOrWhiteSpace(courseId))
+            return BadRequest(new { message = "Course ID is required" });
+            
+        if (string.IsNullOrWhiteSpace(request.StudentMail) || !IsValidEmail(request.StudentMail))
+            return BadRequest(new { message = "Valid student email is required" });
+            
+        if (string.IsNullOrWhiteSpace(request.AssignmentName))
+            return BadRequest(new { message = "Assignment name is required" });
+            
+        if (request.GradeValue < 0 || request.GradeValue > 100)
+            return BadRequest(new { message = "Grade must be between 0 and 100" });
+
         var teacherEmail = GetUserEmail();
         var studentEmail = request.StudentMail;
 
@@ -140,19 +216,42 @@ public class CourseController : ControllerBase
     [Authorize(Policy = "RequireTeacherRole")]
     public async Task<IActionResult> AddBulkGradesToCourse(string courseId, [FromBody] List<AddGradeRequest> requests)
     {
-        var teacherEmail = GetUserEmail();
-        
+        // Validate input
+        if (string.IsNullOrWhiteSpace(courseId))
+            return BadRequest(new { message = "Course ID is required" });
+            
         if (requests == null || !requests.Any())
-        {
             return BadRequest(new { message = "No grades provided" });
+        
+        // Validate each grade request
+        var invalidGrades = new List<(int index, string message)>();
+        for (int i = 0; i < requests.Count; i++)
+        {
+            var request = requests[i];
+            if (string.IsNullOrWhiteSpace(request.StudentMail) || !IsValidEmail(request.StudentMail))
+                invalidGrades.Add((i, "Valid student email is required"));
+                
+            if (string.IsNullOrWhiteSpace(request.AssignmentName))
+                invalidGrades.Add((i, "Assignment name is required"));
+                
+            if (request.GradeValue < 0 || request.GradeValue > 100)
+                invalidGrades.Add((i, "Grade must be between 0 and 100"));
         }
         
+        if (invalidGrades.Any())
+            return BadRequest(new { 
+                message = "Invalid grades found", 
+                invalidEntries = invalidGrades.Select(g => new { 
+                    index = g.index, 
+                    error = g.message 
+                })
+            });
+        
+        var teacherEmail = GetUserEmail();
         var results = await _courseService.AddBulkGradesToCourseAsync(courseId, requests, teacherEmail);
         
         if (results.All(r => !r))
-        {
             return BadRequest(new { message = "Failed to add any grades to course" });
-        }
         
         int successCount = results.Count(r => r);
         int failCount = results.Count(r => !r);
@@ -161,8 +260,7 @@ public class CourseController : ControllerBase
         {
             return Ok(new { 
                 message = $"Added {successCount} grades successfully", 
-                success = successCount,
-                failed = 0
+                success = successCount
             });
         }
         else
@@ -180,6 +278,9 @@ public class CourseController : ControllerBase
     [Authorize(Policy = "RequireTeacherRole")]
     public async Task<IActionResult> GetGradesForCourse(string courseId)
     {
+        if (string.IsNullOrWhiteSpace(courseId))
+            return BadRequest(new { message = "Course ID is required" });
+
         var teacherEmail = GetUserEmail();
         var grades = await _courseService.GetGradesForCourseAsync(courseId, teacherEmail);
         
@@ -194,6 +295,12 @@ public class CourseController : ControllerBase
     [Authorize(Policy = "RequireTeacherRole")]
     public async Task<IActionResult> DeleteGradeFromCourse(string courseId, string gradeId)
     {
+        if (string.IsNullOrWhiteSpace(courseId))
+            return BadRequest(new { message = "Course ID is required" });
+            
+        if (string.IsNullOrWhiteSpace(gradeId))
+            return BadRequest(new { message = "Grade ID is required" });
+
         var teacherEmail = GetUserEmail();
         var result = await _courseService.DeleteGradeFromCourseAsync(courseId, gradeId, teacherEmail);
         
@@ -208,6 +315,9 @@ public class CourseController : ControllerBase
     [Authorize(Policy = "RequireStudentRole")]
     public async Task<IActionResult> GetGradesForCourseAsStudent(string courseId)
     {
+        if (string.IsNullOrWhiteSpace(courseId))
+            return BadRequest(new { message = "Course ID is required" });
+
         var studentEmail = GetUserEmail();
         var grades = await _courseService.GetGradesForCourseAsStudentAsync(courseId, studentEmail);
         
@@ -243,5 +353,19 @@ public class CourseController : ControllerBase
             return NotFound(new { message = "No courses found for this student" });
             
         return Ok(courses);
+    }
+
+    // Helper method for email validation
+    private bool IsValidEmail(string email)
+    {
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }
