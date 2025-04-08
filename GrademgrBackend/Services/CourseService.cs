@@ -488,4 +488,45 @@ public class CourseService : ICourseService
             .Where(g => g.CourseId == courseId && g.StudentId == student.Id)
             .ToListAsync();
     }
+
+    public async Task<bool> UpdateGradeInCourseAsync(string courseId, string gradeId, UpdateGradeRequest request, string teacherEmail)
+    {
+        var teacher = await _context.Users
+            .FirstOrDefaultAsync(u => u.Email == teacherEmail && u.Role == UserRole.Teacher);
+        
+        if (teacher == null)
+            return false;
+
+        var course = await _context.Courses
+            .FirstOrDefaultAsync(c => c.Id == courseId && c.TeacherId == teacher.Id);
+
+        if (course == null)
+            return false;
+            
+        var grade = await _context.Grades
+            .FirstOrDefaultAsync(g => g.Id == gradeId && g.CourseId == courseId);
+            
+        if (grade == null)
+            return false;
+            
+        // Create a grade history record before updating
+        var gradeHistory = new GradeHistory
+        {
+            GradeId = grade.Id,
+            PreviousGrade = grade.GradeValue,
+            ChangedAt = DateTime.UtcNow,
+            ChangedBy = teacher.Id,
+            ChangeReason = request.ChangeReason
+        };
+        
+        // Update the grade
+        grade.GradeValue = request.GradeValue;
+        grade.AssignmentName = request.AssignmentName;
+        
+        // Add the history record
+        await _context.Set<GradeHistory>().AddAsync(gradeHistory);
+        await _context.SaveChangesAsync();
+        
+        return true;
+    }
 }

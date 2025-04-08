@@ -13,7 +13,7 @@ public interface ICourseService
     
     // Student endpoints
     Task<List<Course>> GetStudentCoursesAsync(string studentEmail);
-
+    Task<bool> UpdateGradeInCourseAsync(string courseId, string gradeId, UpdateGradeRequest request, string teacherEmail);
     Task<bool> AddGradeToCourseAsync(string courseId, string studentEmail, GradeRequest request, string teacherEmail);
     Task<List<bool>> AddBulkGradesToCourseAsync(string courseId, List<AddGradeRequest> requests, string teacherEmail);
     Task<List<GradeWithStudentInfo>> GetGradesForCourseAsync(string courseId, string teacherEmail);

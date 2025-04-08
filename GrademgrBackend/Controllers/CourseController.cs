@@ -369,6 +369,49 @@ public class CourseController : ControllerBase
         return NoContent();
     }
 
+    // teacher: update a student grade for a course
+    [HttpPut("{courseId}/grades/{gradeId}")]
+    [Authorize(Policy = "RequireTeacherRole")]
+    public async Task<IActionResult> UpdateGradeInCourse(string courseId, string gradeId, [FromBody] UpdateGradeRequest request)
+    {
+        // Validate model
+        var validationResult = ValidateModel();
+        if (validationResult != null)
+            return validationResult;
+            
+        // Sanitize inputs
+        courseId = _securityService.SanitizeMongoId(courseId);
+        if (string.IsNullOrWhiteSpace(courseId))
+            return BadRequest(new { message = "Invalid course ID format" });
+            
+        gradeId = _securityService.SanitizeMongoId(gradeId);
+        if (string.IsNullOrWhiteSpace(gradeId))
+            return BadRequest(new { message = "Invalid grade ID format" });
+            
+        // Check for scripting patterns
+        if (_securityService.ContainsScriptingPattern(request.AssignmentName) ||
+            _securityService.ContainsScriptingPattern(request.ChangeReason))
+            return BadRequest(new { message = "Invalid input detected" });
+            
+        // Sanitize and validate inputs
+        request.AssignmentName = _securityService.SanitizeString(request.AssignmentName);
+        if (string.IsNullOrWhiteSpace(request.AssignmentName))
+            return BadRequest(new { message = "Assignment name is required" });
+            
+        request.ChangeReason = _securityService.SanitizeString(request.ChangeReason);
+        
+        if (request.GradeValue < 0 || request.GradeValue > 100)
+            return BadRequest(new { message = "Grade must be between 0 and 100" });
+
+        var teacherEmail = _securityService.SanitizeEmail(GetUserEmail());
+        var result = await _courseService.UpdateGradeInCourseAsync(courseId, gradeId, request, teacherEmail);
+        
+        if (!result)
+            return BadRequest(new { message = "Failed to update grade. Grade not found or you don't have permission." });
+            
+        return Ok(new { message = "Grade updated successfully" });
+    }
+
     // student: get all grades for course
     [HttpGet("{courseId}/grades/student")]
     [Authorize(Policy = "RequireStudentRole")]
