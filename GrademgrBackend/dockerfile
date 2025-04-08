@@ -1,15 +1,31 @@
-FROM alpine:latest
+FROM ubuntu:24.10 AS builder
 
 WORKDIR /app
 
-RUN apk add --no-cache dotnet9-sdk
+RUN apt update
+RUN apt install dotnet-sdk-9.0 -y
 
 COPY . .
 
 RUN dotnet restore
 
-ENV MONGODB_URI="mongodb://root:root@mongo/"
+RUN dotnet build -o out
 
-CMD [ "dotnet", "run" ]
+FROM ubuntu:24.10 AS runtime
+
+WORKDIR /app
+
+COPY --from=builder /app/out .
+COPY --from=builder /app/appsettings.json .
+COPY --from=builder /app/appsettings.Development.json .
+
+RUN apt update
+
+RUN apt install build-essential aspnetcore-runtime-9.0 -y
+
+ENV MONGODB_URI="mongodb://root:root@mongo/"
+ENV ASPNETCORE_URLS=http://+:5052
+
+CMD ["dotnet", "GrademgrBackend.dll"]
 
 EXPOSE 5052
