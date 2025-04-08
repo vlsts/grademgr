@@ -10,10 +10,12 @@ using System.Linq;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly ISecurityService _securityService;
 
-    public AuthController(IAuthService authService)
+    public AuthController(IAuthService authService, ISecurityService securityService)
     {
         _authService = authService;
+        _securityService = securityService;
     }
 
     [HttpPost("register")]
@@ -29,6 +31,12 @@ public class AuthController : ControllerBase
                 });
             }
 
+            // Sanitize inputs
+            model.Username = _securityService.SanitizeString(model.Username);
+            model.Email = _securityService.SanitizeEmail(model.Email);
+            model.FullName = _securityService.SanitizeString(model.FullName);
+
+            // Validate inputs
             if (string.IsNullOrWhiteSpace(model.Username) || model.Username.Length < 3)
             {
                 return BadRequest(new { message = "Username must be at least 3 characters long." });
@@ -39,9 +47,17 @@ public class AuthController : ControllerBase
                 return BadRequest(new { message = "Password must be at least 6 characters long." });
             }
 
-            if (string.IsNullOrWhiteSpace(model.Email) || !IsValidEmail(model.Email))
+            if (string.IsNullOrWhiteSpace(model.Email) || !_securityService.IsValidEmail(model.Email))
             {
                 return BadRequest(new { message = "Please provide a valid email address." });
+            }
+
+            // Check for security threats
+            if (_securityService.ContainsScriptingPattern(model.Username) || 
+                _securityService.ContainsScriptingPattern(model.Email) || 
+                _securityService.ContainsScriptingPattern(model.FullName))
+            {
+                return BadRequest(new { message = "Invalid input detected." });
             }
 
             var result = await _authService.RegisterAsync(model);
@@ -72,7 +88,11 @@ public class AuthController : ControllerBase
                 });
             }
 
-            if (string.IsNullOrWhiteSpace(model.Email) || !IsValidEmail(model.Email))
+            // Sanitize inputs
+            model.Email = _securityService.SanitizeEmail(model.Email);
+
+            // Validate inputs
+            if (string.IsNullOrWhiteSpace(model.Email) || !_securityService.IsValidEmail(model.Email))
             {
                 return BadRequest(new { message = "Please provide a valid email address." });
             }
@@ -82,25 +102,18 @@ public class AuthController : ControllerBase
                 return BadRequest(new { message = "Password is required." });
             }
 
+            // Check for security threats
+            if (_securityService.ContainsScriptingPattern(model.Email))
+            {
+                return BadRequest(new { message = "Invalid input detected." });
+            }
+
             var result = await _authService.LoginAsync(model);
             return Ok(result);
         }
         catch (Exception ex)
         {
             return BadRequest(new { message = ex.Message });
-        }
-    }
-
-    private bool IsValidEmail(string email)
-    {
-        try
-        {
-            var addr = new System.Net.Mail.MailAddress(email);
-            return addr.Address == email;
-        }
-        catch
-        {
-            return false;
         }
     }
 

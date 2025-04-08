@@ -65,6 +65,9 @@ builder.Services.AddCors(options =>
 // Register course service
 builder.Services.AddScoped<ICourseService, CourseService>();
 
+// Register security service
+builder.Services.AddScoped<ISecurityService, SecurityService>();
+
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
