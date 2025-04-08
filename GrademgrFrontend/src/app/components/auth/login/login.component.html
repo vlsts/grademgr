@@ -5,29 +5,60 @@
     
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
       <div class="form-group">
-        <label for="email">Email</label>
+        <label for="email">Email <span class="required">*</span></label>
         <input 
-          type="text" 
+          type="email" 
           id="email" 
-          formControlName="email">
-        <div *ngIf="submitted && f['email'].errors" class="validation-error">
-          <div *ngIf="f['email'].errors['required']">Email is required</div>
+          formControlName="email"
+          required
+          pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+          placeholder="example@domain.com"
+          [class.invalid]="(submitted || loginForm.get('email')?.touched) && loginForm.get('email')?.invalid">
+        <div *ngIf="(submitted || loginForm.get('email')?.touched) && loginForm.get('email')?.errors" class="validation-error">
+          <div *ngIf="loginForm.get('email')?.errors?.['required']">Email is required</div>
+          <div *ngIf="loginForm.get('email')?.errors?.['pattern'] || loginForm.get('email')?.errors?.['email']">
+            Please enter a valid email address
+          </div>
         </div>
       </div>
       
       <div class="form-group">
-        <label for="password">Password</label>
-        <input 
-          type="password" 
-          id="password" 
-          formControlName="password">
-        <div *ngIf="submitted && f['password'].errors" class="validation-error">
-          <div *ngIf="f['password'].errors['required']">Password is required</div>
-          <div *ngIf="f['password'].errors['minlength']">Password must be at least 6 characters</div>
+        <label for="password">Password <span class="required">*</span></label>
+        <div class="password-input-container">
+          <input 
+            [type]="showPassword ? 'text' : 'password'" 
+            id="password" 
+            formControlName="password"
+            required
+            minlength="6"
+            placeholder="Enter your password"
+            [class.invalid]="(submitted || loginForm.get('password')?.touched) && loginForm.get('password')?.invalid">
+          <button 
+            type="button" 
+            class="toggle-password" 
+            (click)="showPassword = !showPassword" 
+            [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+            tabindex="-1">
+            {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+          </button>
+        </div>
+        <div *ngIf="(submitted || loginForm.get('password')?.touched) && loginForm.get('password')?.errors" class="validation-error">
+          <div *ngIf="loginForm.get('password')?.errors?.['required']">Password is required</div>
+          <div *ngIf="loginForm.get('password')?.errors?.['minlength']">
+            Password must be at least {{ loginForm.get('password')?.errors?.['minlength'].requiredLength }} characters
+          </div>
         </div>
       </div>
       
-      <button type="submit" [disabled]="loginForm.invalid">Login</button>
+      <div class="form-actions">
+        <button 
+          type="submit" 
+          [disabled]="isLoading || loginForm.invalid" 
+          class="login-button">
+          <span *ngIf="isLoading" class="spinner"></span>
+          <span>{{ isLoading ? 'Logging in...' : 'Login' }}</span>
+        </button>
+      </div>
       
       <div class="signup-prompt">
         <p>Don't have an account?</p>
