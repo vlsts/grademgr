@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { map, Observable } from 'rxjs';
+import { forkJoin, map, Observable } from 'rxjs';
 import { Course } from '../models/course';
 import { CourseDetailResponse } from '../models/course-details';
 import { StudentInfo } from '../models/student-info';
@@ -66,6 +66,24 @@ export class CourseService {
       comment
     };
     return this.http.post<any>(`${this.apiUrl}/${courseId}/grades`, request, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  addMultipleGrades(courseId: string, grades: {
+    studentMail: string;
+    gradeValue: number;
+    assignmentName: string;
+    comment?: string;
+  }[]): Observable<any> {
+    const requests = grades.map(grade => ({
+      studentMail: grade.studentMail,
+      gradeValue: grade.gradeValue,
+      assignmentName: grade.assignmentName,
+      comment: grade.comment
+    }));
+    
+    return this.http.post<any>(`${this.apiUrl}/${courseId}/grades/bulk`, requests, {
       headers: this.getAuthHeaders()
     });
   }
