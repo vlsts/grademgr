@@ -294,6 +294,7 @@ public class CourseService : ICourseService
                 
                 var grade = new Grade
                 {
+                    Id = ObjectId.GenerateNewId().ToString(),
                     StudentId = student.Id,
                     CourseId = courseId,
                     GradeValue = request.GradeValue,
