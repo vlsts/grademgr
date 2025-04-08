@@ -261,6 +261,60 @@ public class CourseService : ICourseService
         return true;
     }
 
+    // teacher: add bulk grades to course
+    public async Task<List<bool>> AddBulkGradesToCourseAsync(string courseId, List<AddGradeRequest> requests, string teacherEmail)
+    {
+        var teacher = await _context.Users
+            .FirstOrDefaultAsync(u => u.Email == teacherEmail && u.Role == UserRole.Teacher);
+        
+        if (teacher == null)
+            return requests.Select(_ => false).ToList();
+
+        var course = await _context.Courses
+            .FirstOrDefaultAsync(c => c.Id == courseId && c.TeacherId == teacher.Id);
+
+        if (course == null)
+            return requests.Select(_ => false).ToList();
+        
+        var results = new List<bool>();
+        
+        foreach (var request in requests)
+        {
+            try
+            {
+                var studentEmail = request.StudentMail;
+                var student = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Email == studentEmail && u.Role == UserRole.Student);
+                
+                if (student == null || !course.StudentIds.Contains(student.Id))
+                {
+                    results.Add(false);
+                    continue;
+                }
+                
+                var grade = new Grade
+                {
+                    StudentId = student.Id,
+                    CourseId = courseId,
+                    GradeValue = request.GradeValue,
+                    AssignmentName = request.AssignmentName,
+                    EnteredAt = DateTime.UtcNow,
+                    EnteredBy = teacher.Id
+                };
+                
+                _context.Grades.Add(grade);
+                results.Add(true);
+            }
+            catch
+            {
+                results.Add(false);
+            }
+        }
+        
+        await _context.SaveChangesAsync();
+        return results;
+    }
+
     // teacher: get all student grades for course
 
     public async Task<List<GradeWithStudentInfo>> GetGradesForCourseAsync(string courseId, string teacherEmail)
@@ -326,7 +380,6 @@ public class CourseService : ICourseService
         await _context.SaveChangesAsync();
         return true;
     }
-
 
     // student: get all grades for all courses
 

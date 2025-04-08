@@ -4,6 +4,7 @@ using System;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -132,6 +133,46 @@ public class CourseController : ControllerBase
             return BadRequest(new { message = "Failed to add grade to course" });
             
         return Ok(new { message = "Grade added to course" });
+    }
+
+    // teacher: add multiple student grades to course at once
+    [HttpPost("{courseId}/grades/bulk")]
+    [Authorize(Policy = "RequireTeacherRole")]
+    public async Task<IActionResult> AddBulkGradesToCourse(string courseId, [FromBody] List<AddGradeRequest> requests)
+    {
+        var teacherEmail = GetUserEmail();
+        
+        if (requests == null || !requests.Any())
+        {
+            return BadRequest(new { message = "No grades provided" });
+        }
+        
+        var results = await _courseService.AddBulkGradesToCourseAsync(courseId, requests, teacherEmail);
+        
+        if (results.All(r => !r))
+        {
+            return BadRequest(new { message = "Failed to add any grades to course" });
+        }
+        
+        int successCount = results.Count(r => r);
+        int failCount = results.Count(r => !r);
+        
+        if (failCount == 0)
+        {
+            return Ok(new { 
+                message = $"Added {successCount} grades successfully", 
+                success = successCount,
+                failed = 0
+            });
+        }
+        else
+        {
+            return Ok(new { 
+                message = $"Added {successCount} grades successfully, {failCount} failed", 
+                success = successCount, 
+                failed = failCount 
+            });
+        }
     }
 
     // teacher: get all student grades for course
