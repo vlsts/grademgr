@@ -1,0 +1,33 @@
+name: Check Build BE
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+        branches:
+            - main
+    workflow_dispatch:
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4.2.2
+            
+            - name: Setup .NET
+              uses: actions/setup-dotnet@v4.3.1
+              with:
+                dotnet-version: '9.0.x'
+            
+            - name: Restore dependencies
+              run: dotnet restore
+              working-directory: ./GrademgrBackend
+            
+            - name: Build project
+              run: dotnet build
+              working-directory: ./GrademgrBackend
+            
+            - name: Run tests
+              run: dotnet test
+              working-directory: ./GrademgrBackend
