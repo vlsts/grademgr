@@ -68,6 +68,11 @@ public class AddGradeRequest : GradeRequest
     public string StudentMail { get; set; }
 }
 
+public class UpdateGradeRequest : GradeRequest
+{
+    public string ChangeReason { get; set; }
+}
+
 public class GradeWithStudentInfo : Grade
 {
     public string StudentName { get; set; }
