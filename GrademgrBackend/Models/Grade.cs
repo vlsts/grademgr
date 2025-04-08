@@ -53,14 +53,18 @@ public class GradeHistory
 
 public class GradeRequest
 {
-    [Range(0, 100)]
+    [Required(ErrorMessage = "Grade value is required")]
+    [Range(0, 100, ErrorMessage = "Grade must be between 0 and 100")]
     public decimal GradeValue { get; set; }
 
+    [Required(ErrorMessage = "Assignment name is required")]
     public string AssignmentName { get; set; }
 }
 
 public class AddGradeRequest : GradeRequest
 {
+    [Required(ErrorMessage = "Student email is required")]
+    [EmailAddress(ErrorMessage = "Please provide a valid email address")]
     public string StudentMail { get; set; }
 }
 
