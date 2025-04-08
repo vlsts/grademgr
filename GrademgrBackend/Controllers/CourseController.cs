@@ -12,10 +12,12 @@ using System.Collections.Generic;
 public class CourseController : ControllerBase
 {
     private readonly ICourseService _courseService;
+    private readonly ISecurityService _securityService;
 
-    public CourseController(ICourseService courseService)
+    public CourseController(ICourseService courseService, ISecurityService securityService)
     {
         _courseService = courseService;
+        _securityService = securityService;
     }
 
     // Helper method to get current user email from token
@@ -57,7 +59,7 @@ public class CourseController : ControllerBase
     [Authorize(Policy = "RequireTeacherRole")]
     public async Task<IActionResult> GetTeacherCourses()
     {
-        var teacherEmail = GetUserEmail();
+        var teacherEmail = _securityService.SanitizeEmail(GetUserEmail());
         var courses = await _courseService.GetTeacherCoursesAsync(teacherEmail);
         return Ok(courses);
     }
@@ -71,6 +73,19 @@ public class CourseController : ControllerBase
         if (validationResult != null)
             return validationResult;
             
+        // Check for scripting patterns
+        if (_securityService.ContainsScriptingPattern(request.CourseName) || 
+            _securityService.ContainsScriptingPattern(request.CourseCode) ||
+            _securityService.ContainsScriptingPattern(request.Description))
+        {
+            return BadRequest(new { message = "Invalid input detected" });
+        }
+            
+        // Sanitize inputs
+        request.CourseName = _securityService.SanitizeString(request.CourseName);
+        request.CourseCode = _securityService.SanitizeString(request.CourseCode);
+        request.Description = _securityService.SanitizeString(request.Description);
+            
         // Additional validations
         if (string.IsNullOrWhiteSpace(request.CourseName))
             return BadRequest(new { message = "Course name is required" });
@@ -78,7 +93,7 @@ public class CourseController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.CourseCode))
             return BadRequest(new { message = "Course code is required" });
 
-        var teacherEmail = GetUserEmail();
+        var teacherEmail = _securityService.SanitizeEmail(GetUserEmail());
         try
         {
             var course = await _courseService.CreateCourseAsync(request, teacherEmail);
@@ -94,10 +109,11 @@ public class CourseController : ControllerBase
     [Authorize(Policy = "RequireTeacherRole")]
     public async Task<IActionResult> DeleteCourse(string id)
     {
+        id = _securityService.SanitizeMongoId(id);
         if (string.IsNullOrWhiteSpace(id))
-            return BadRequest(new { message = "Course ID is required" });
+            return BadRequest(new { message = "Invalid course ID format" });
 
-        var teacherEmail = GetUserEmail();
+        var teacherEmail = _securityService.SanitizeEmail(GetUserEmail());
         var result = await _courseService.DeleteCourseAsync(id, teacherEmail);
         
         if (!result)
@@ -115,13 +131,20 @@ public class CourseController : ControllerBase
         if (validationResult != null)
             return validationResult;
             
+        // Sanitize inputs
+        courseId = _securityService.SanitizeMongoId(courseId);
         if (string.IsNullOrWhiteSpace(courseId))
-            return BadRequest(new { message = "Course ID is required" });
+            return BadRequest(new { message = "Invalid course ID format" });
             
-        if (string.IsNullOrWhiteSpace(request.StudentEmail) || !IsValidEmail(request.StudentEmail))
+        // Check for scripting patterns
+        if (_securityService.ContainsScriptingPattern(request.StudentEmail))
+            return BadRequest(new { message = "Invalid input detected" });
+            
+        request.StudentEmail = _securityService.SanitizeEmail(request.StudentEmail);
+        if (string.IsNullOrWhiteSpace(request.StudentEmail) || !_securityService.IsValidEmail(request.StudentEmail))
             return BadRequest(new { message = "Valid student email is required" });
 
-        var teacherEmail = GetUserEmail();
+        var teacherEmail = _securityService.SanitizeEmail(GetUserEmail());
         var result = await _courseService.AddStudentToCourseAsync(courseId, request.StudentEmail, teacherEmail);
         
         if (!result)
@@ -134,13 +157,20 @@ public class CourseController : ControllerBase
     [Authorize(Policy = "RequireTeacherRole")]
     public async Task<IActionResult> RemoveStudentFromCourse(string courseId, string studentEmail)
     {
+        // Sanitize inputs
+        courseId = _securityService.SanitizeMongoId(courseId);
         if (string.IsNullOrWhiteSpace(courseId))
-            return BadRequest(new { message = "Course ID is required" });
+            return BadRequest(new { message = "Invalid course ID format" });
             
-        if (string.IsNullOrWhiteSpace(studentEmail) || !IsValidEmail(studentEmail))
+        // Check for scripting patterns
+        if (_securityService.ContainsScriptingPattern(studentEmail))
+            return BadRequest(new { message = "Invalid input detected" });
+            
+        studentEmail = _securityService.SanitizeEmail(studentEmail);
+        if (string.IsNullOrWhiteSpace(studentEmail) || !_securityService.IsValidEmail(studentEmail))
             return BadRequest(new { message = "Valid student email is required" });
 
-        var teacherEmail = GetUserEmail();
+        var teacherEmail = _securityService.SanitizeEmail(GetUserEmail());
         var result = await _courseService.RemoveStudentFromCourseAsync(courseId, studentEmail, teacherEmail);
         
         if (!result)
@@ -154,7 +184,7 @@ public class CourseController : ControllerBase
     [Authorize(Policy = "RequireStudentRole")]
     public async Task<IActionResult> GetStudentCourses()
     {
-        var studentEmail = GetUserEmail();
+        var studentEmail = _securityService.SanitizeEmail(GetUserEmail());
         var courses = await _courseService.GetStudentCoursesAsync(studentEmail);
         return Ok(courses);
     }
@@ -164,10 +194,11 @@ public class CourseController : ControllerBase
     [Authorize]
     public async Task<IActionResult> GetCourseDetails(string id)
     {
+        id = _securityService.SanitizeMongoId(id);
         if (string.IsNullOrWhiteSpace(id))
-            return BadRequest(new { message = "Course ID is required" });
+            return BadRequest(new { message = "Invalid course ID format" });
 
-        var userEmail = GetUserEmail();
+        var userEmail = _securityService.SanitizeEmail(GetUserEmail());
         var userRole = GetUserRole();
         
         var courseDetails = await _courseService.GetCourseDetailsAsync(id, userEmail, userRole);
@@ -188,19 +219,28 @@ public class CourseController : ControllerBase
         if (validationResult != null)
             return validationResult;
             
+        // Sanitize inputs
+        courseId = _securityService.SanitizeMongoId(courseId);
         if (string.IsNullOrWhiteSpace(courseId))
-            return BadRequest(new { message = "Course ID is required" });
+            return BadRequest(new { message = "Invalid course ID format" });
             
-        if (string.IsNullOrWhiteSpace(request.StudentMail) || !IsValidEmail(request.StudentMail))
+        // Check for scripting patterns
+        if (_securityService.ContainsScriptingPattern(request.StudentMail) || 
+            _securityService.ContainsScriptingPattern(request.AssignmentName))
+            return BadRequest(new { message = "Invalid input detected" });
+            
+        request.StudentMail = _securityService.SanitizeEmail(request.StudentMail);
+        if (string.IsNullOrWhiteSpace(request.StudentMail) || !_securityService.IsValidEmail(request.StudentMail))
             return BadRequest(new { message = "Valid student email is required" });
             
+        request.AssignmentName = _securityService.SanitizeString(request.AssignmentName);
         if (string.IsNullOrWhiteSpace(request.AssignmentName))
             return BadRequest(new { message = "Assignment name is required" });
             
         if (request.GradeValue < 0 || request.GradeValue > 100)
             return BadRequest(new { message = "Grade must be between 0 and 100" });
 
-        var teacherEmail = GetUserEmail();
+        var teacherEmail = _securityService.SanitizeEmail(GetUserEmail());
         var studentEmail = request.StudentMail;
 
         var result = await _courseService.AddGradeToCourseAsync(courseId, studentEmail, request, teacherEmail);
@@ -216,26 +256,42 @@ public class CourseController : ControllerBase
     [Authorize(Policy = "RequireTeacherRole")]
     public async Task<IActionResult> AddBulkGradesToCourse(string courseId, [FromBody] List<AddGradeRequest> requests)
     {
-        // Validate input
+        // Sanitize inputs
+        courseId = _securityService.SanitizeMongoId(courseId);
         if (string.IsNullOrWhiteSpace(courseId))
-            return BadRequest(new { message = "Course ID is required" });
+            return BadRequest(new { message = "Invalid course ID format" });
             
         if (requests == null || !requests.Any())
             return BadRequest(new { message = "No grades provided" });
         
-        // Validate each grade request
+        // Validate and sanitize each grade request
         var invalidGrades = new List<(int index, string message)>();
         for (int i = 0; i < requests.Count; i++)
         {
             var request = requests[i];
-            if (string.IsNullOrWhiteSpace(request.StudentMail) || !IsValidEmail(request.StudentMail))
+            
+            // Check for scripting patterns
+            if (_securityService.ContainsScriptingPattern(request.StudentMail) || 
+                _securityService.ContainsScriptingPattern(request.AssignmentName))
+            {
+                invalidGrades.Add((i, "Invalid input detected"));
+                continue;
+            }
+            
+            // Sanitize and validate inputs
+            request.StudentMail = _securityService.SanitizeEmail(request.StudentMail);
+            if (string.IsNullOrWhiteSpace(request.StudentMail) || !_securityService.IsValidEmail(request.StudentMail))
                 invalidGrades.Add((i, "Valid student email is required"));
                 
+            request.AssignmentName = _securityService.SanitizeString(request.AssignmentName);
             if (string.IsNullOrWhiteSpace(request.AssignmentName))
                 invalidGrades.Add((i, "Assignment name is required"));
                 
             if (request.GradeValue < 0 || request.GradeValue > 100)
                 invalidGrades.Add((i, "Grade must be between 0 and 100"));
+            
+            // Update the sanitized request in the list
+            requests[i] = request;
         }
         
         if (invalidGrades.Any())
@@ -247,7 +303,7 @@ public class CourseController : ControllerBase
                 })
             });
         
-        var teacherEmail = GetUserEmail();
+        var teacherEmail = _securityService.SanitizeEmail(GetUserEmail());
         var results = await _courseService.AddBulkGradesToCourseAsync(courseId, requests, teacherEmail);
         
         if (results.All(r => !r))
@@ -278,10 +334,11 @@ public class CourseController : ControllerBase
     [Authorize(Policy = "RequireTeacherRole")]
     public async Task<IActionResult> GetGradesForCourse(string courseId)
     {
+        courseId = _securityService.SanitizeMongoId(courseId);
         if (string.IsNullOrWhiteSpace(courseId))
-            return BadRequest(new { message = "Course ID is required" });
+            return BadRequest(new { message = "Invalid course ID format" });
 
-        var teacherEmail = GetUserEmail();
+        var teacherEmail = _securityService.SanitizeEmail(GetUserEmail());
         var grades = await _courseService.GetGradesForCourseAsync(courseId, teacherEmail);
         
         if (grades == null || !grades.Any())
@@ -295,13 +352,15 @@ public class CourseController : ControllerBase
     [Authorize(Policy = "RequireTeacherRole")]
     public async Task<IActionResult> DeleteGradeFromCourse(string courseId, string gradeId)
     {
+        courseId = _securityService.SanitizeMongoId(courseId);
         if (string.IsNullOrWhiteSpace(courseId))
-            return BadRequest(new { message = "Course ID is required" });
+            return BadRequest(new { message = "Invalid course ID format" });
             
+        gradeId = _securityService.SanitizeMongoId(gradeId);
         if (string.IsNullOrWhiteSpace(gradeId))
-            return BadRequest(new { message = "Grade ID is required" });
+            return BadRequest(new { message = "Invalid grade ID format" });
 
-        var teacherEmail = GetUserEmail();
+        var teacherEmail = _securityService.SanitizeEmail(GetUserEmail());
         var result = await _courseService.DeleteGradeFromCourseAsync(courseId, gradeId, teacherEmail);
         
         if (!result)
@@ -315,10 +374,11 @@ public class CourseController : ControllerBase
     [Authorize(Policy = "RequireStudentRole")]
     public async Task<IActionResult> GetGradesForCourseAsStudent(string courseId)
     {
+        courseId = _securityService.SanitizeMongoId(courseId);
         if (string.IsNullOrWhiteSpace(courseId))
-            return BadRequest(new { message = "Course ID is required" });
+            return BadRequest(new { message = "Invalid course ID format" });
 
-        var studentEmail = GetUserEmail();
+        var studentEmail = _securityService.SanitizeEmail(GetUserEmail());
         var grades = await _courseService.GetGradesForCourseAsStudentAsync(courseId, studentEmail);
         
         if (grades == null || !grades.Any())
@@ -332,7 +392,7 @@ public class CourseController : ControllerBase
     [Authorize(Policy = "RequireStudentRole")]
     public async Task<IActionResult> GetGradesForStudent()
     {
-        var studentEmail = GetUserEmail();
+        var studentEmail = _securityService.SanitizeEmail(GetUserEmail());
         var grades = await _courseService.GetGradesForStudentAsync(studentEmail);
         
         if (grades == null || !grades.Any())
@@ -346,26 +406,12 @@ public class CourseController : ControllerBase
     [Authorize(Policy = "RequireStudentRole")]
     public async Task<IActionResult> GetCoursesForStudent()
     {
-        var studentEmail = GetUserEmail();
+        var studentEmail = _securityService.SanitizeEmail(GetUserEmail());
         var courses = await _courseService.GetStudentCoursesAsync(studentEmail);
         
         if (courses == null || !courses.Any())
             return NotFound(new { message = "No courses found for this student" });
             
         return Ok(courses);
-    }
-
-    // Helper method for email validation
-    private bool IsValidEmail(string email)
-    {
-        try
-        {
-            var addr = new System.Net.Mail.MailAddress(email);
-            return addr.Address == email;
-        }
-        catch
-        {
-            return false;
-        }
     }
 }
