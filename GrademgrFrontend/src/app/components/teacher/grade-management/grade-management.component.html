@@ -31,7 +31,13 @@
                             name="studentEmail" 
                             [(ngModel)]="newGrade.studentEmail" 
                             required
+                            pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+                            #emailInput="ngModel"
                         >
+                        <div *ngIf="emailInput.invalid && (emailInput.dirty || emailInput.touched)" class="validation-error">
+                            <div *ngIf="emailInput.errors?.['required']">Email is required</div>
+                            <div *ngIf="emailInput.errors?.['pattern']">Please enter a valid email</div>
+                        </div>
                     </div>
                     
                     <div class="form-group">
@@ -42,7 +48,14 @@
                             name="assignmentName" 
                             [(ngModel)]="newGrade.assignmentName" 
                             required
+                            minlength="2"
+                            maxlength="100"
+                            #assignmentInput="ngModel"
                         >
+                        <div *ngIf="assignmentInput.invalid && (assignmentInput.dirty || assignmentInput.touched)" class="validation-error">
+                            <div *ngIf="assignmentInput.errors?.['required']">Assignment name is required</div>
+                            <div *ngIf="assignmentInput.errors?.['minlength']">Assignment name must be at least 2 characters</div>
+                        </div>
                     </div>
                     
                     <div class="form-group">
@@ -52,11 +65,17 @@
                             id="grade" 
                             name="grade" 
                             [(ngModel)]="newGrade.grade" 
-                            min="1" 
+                            min="0" 
                             max="10" 
                             step="0.1"
                             required
+                            #gradeInput="ngModel"
                         >
+                    </div>
+                    <div *ngIf="gradeInput.invalid && (gradeInput.dirty || gradeInput.touched)" class="validation-error">
+                        <div *ngIf="gradeInput.errors?.['required']">Grade is required</div>
+                        <div *ngIf="gradeInput.errors?.['min']">Grade cannot be less than 0</div>
+                        <div *ngIf="gradeInput.errors?.['max']">Grade cannot be greater than 10</div>
                     </div>
                     
                     <div class="form-group">
@@ -66,12 +85,28 @@
                             name="comment" 
                             [(ngModel)]="newGrade.comment"
                             rows="3"
+                            maxlength="500"
+                            #commentInput="ngModel"
                         ></textarea>
+                        <div class="text-counter" [class.near-limit]="newGrade.comment && newGrade.comment.length > 450">
+                            {{ newGrade.comment ? newGrade.comment.length : 0 }}/500
+                        </div>
                     </div>
                     
                     <div class="form-actions">
-                        <button type="submit" class="submit-button" [disabled]="!newGrade.studentEmail || !newGrade.grade || !newGrade.assignmentName">Add Grade</button>
-                        <button type="button" class="add-to-batch-button" (click)="addToBatch()" [disabled]="!newGrade.studentEmail || !newGrade.grade || !newGrade.assignmentName">Add to Batch</button>
+                        <button 
+                            type="submit" 
+                            class="submit-button" 
+                            [disabled]="isLoading || !selectedCourseId || !newGrade.studentEmail || !newGrade.assignmentName || !newGrade.grade || gradeInput.invalid || assignmentInput.invalid || emailInput.invalid">
+                            Add Grade
+                        </button>
+                        <button 
+                            type="button" 
+                            class="add-to-batch-button" 
+                            [disabled]="isLoading || !selectedCourseId || !newGrade.studentEmail || !newGrade.assignmentName || !newGrade.grade || gradeInput.invalid || assignmentInput.invalid || emailInput.invalid"
+                            (click)="addToBatch()">
+                            Add to Batch
+                        </button>
                     </div>
                 </form>
             </div>
@@ -166,7 +201,12 @@
                                             [(ngModel)]="grade.studentEmail" 
                                             name="edit-email-{{i}}"
                                             required
+                                            pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+                                            #editEmail="ngModel"
                                         >
+                                        <div *ngIf="editEmail.invalid && editEmail.touched" class="edit-validation-error">
+                                            Invalid email
+                                        </div>
                                     </td>
                                     <td>
                                         <input 
@@ -175,7 +215,13 @@
                                             [(ngModel)]="grade.assignmentName" 
                                             name="edit-assignment-{{i}}"
                                             required
+                                            minlength="2"
+                                            maxlength="100"
+                                            #editAssignment="ngModel"
                                         >
+                                        <div *ngIf="editAssignment.invalid && editAssignment.touched" class="edit-validation-error">
+                                            Required
+                                        </div>
                                     </td>
                                     <td>
                                         <input 
@@ -183,11 +229,16 @@
                                             class="edit-input"
                                             [(ngModel)]="grade.grade" 
                                             name="edit-grade-{{i}}"
-                                            min="1" 
+                                            min="0" 
                                             max="10" 
                                             step="0.1"
                                             required
+                                            #editGrade="ngModel"
                                         >
+                                        <div *ngIf="editGrade.invalid && editGrade.touched" class="edit-validation-error">
+                                            <span *ngIf="editGrade.errors?.['min'] || editGrade.errors?.['max']">Range: 0-10</span>
+                                            <span *ngIf="editGrade.errors?.['required']">Required</span>
+                                        </div>
                                     </td>
                                     <td>
                                         <input 
@@ -195,10 +246,15 @@
                                             class="edit-input"
                                             [(ngModel)]="grade.comment" 
                                             name="edit-comment-{{i}}"
+                                            maxlength="500"
                                         >
                                     </td>
                                     <td class="actions">
-                                        <button class="icon-button save" (click)="savePendingGradeEdit(i)" title="Save changes">✓</button>
+                                        <button 
+                                            class="icon-button save" 
+                                            (click)="savePendingGradeEdit(i)" 
+                                            title="Save changes"
+                                            [disabled]="editEmail?.invalid || editAssignment?.invalid || editGrade?.invalid">✓</button>
                                         <button class="icon-button cancel" (click)="cancelPendingGradeEdit(i)" title="Cancel edit">✗</button>
                                     </td>
                                 </ng-container>
