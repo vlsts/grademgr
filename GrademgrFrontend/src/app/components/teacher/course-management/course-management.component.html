@@ -27,26 +27,40 @@
         <h3>{{ isEditMode ? 'Edit Course' : 'Add New Course' }}</h3>
         <form [formGroup]="courseForm" (ngSubmit)="saveCourse()">
           <div class="form-group">
-            <label for="courseName">Course Name</label>
+            <label for="courseName">Course Name <span class="required">*</span></label>
             <input 
               type="text" 
               id="courseName" 
               formControlName="courseName"
-              placeholder="e.g. Introduction to Programming">
-            <div class="error" *ngIf="courseForm.get('courseName')?.invalid && courseForm.get('courseName')?.touched">
-              Course name is required
-            </div>
+              required
+              minlength="3"
+              maxlength="30"
+              placeholder="e.g. Introduction to Programming"
+              [class.invalid]="courseForm.get('courseName')?.invalid && courseForm.get('courseName')?.touched">
+              <div class="error" *ngIf="courseForm.get('courseName')?.invalid && courseForm.get('courseName')?.touched">
+                <span *ngIf="courseForm.get('courseName')?.errors?.['required']">Course name is required</span>
+                <span *ngIf="courseForm.get('courseName')?.errors?.['minlength']">Course name must be at least 3 characters</span>
+                <span *ngIf="courseForm.get('courseName')?.errors?.['maxlength']">Course name cannot exceed 30 characters</span>
+              </div>
           </div>
   
           <div class="form-group">
-            <label for="courseCode">Course Code</label>
+            <label for="courseCode">Course Code <span class="required">*</span></label>
             <input 
               type="text" 
               id="courseCode" 
               formControlName="courseCode"
-              placeholder="e.g. CS101">
+              required
+              minlength="2"
+              maxlength="20"
+              pattern="^[A-Z]{1,5}[0-9]{1,5}$"
+              placeholder="e.g. CS101"
+              [class.invalid]="courseForm.get('courseCode')?.invalid && courseForm.get('courseCode')?.touched">
             <div class="error" *ngIf="courseForm.get('courseCode')?.invalid && courseForm.get('courseCode')?.touched">
-              Valid course code is required (e.g. CS101)
+              <span *ngIf="courseForm.get('courseCode')?.errors?.['required']">Course code is required</span>
+              <span *ngIf="courseForm.get('courseCode')?.errors?.['pattern']">Valid course code is required (e.g. CS101)</span>
+              <span *ngIf="courseForm.get('courseCode')?.errors?.['minlength']">Course code must be at least 2 characters</span>
+              <span *ngIf="courseForm.get('courseCode')?.errors?.['maxlength']">Course code cannot exceed 20 characters</span>
             </div>
           </div>
   
@@ -55,10 +69,15 @@
             <textarea 
               id="description" 
               formControlName="description"
-              placeholder="Brief description of the course"
-              rows="3"></textarea>
+              maxlength="500"
+              placeholder="Brief description of the course (optional)"
+              rows="3"
+              [class.invalid]="courseForm.get('description')?.invalid && courseForm.get('description')?.touched"></textarea>
+            <div class="char-counter" [class.near-limit]="courseForm.get('description')?.value?.length > 450">
+              {{ courseForm.get('description')?.value?.length || 0 }}/500
+            </div>
             <div class="error" *ngIf="courseForm.get('description')?.invalid && courseForm.get('description')?.touched">
-              Description is required
+              <span *ngIf="courseForm.get('description')?.errors?.['maxlength']">Description cannot exceed 500 characters</span>
             </div>
           </div>
   
@@ -76,14 +95,18 @@
         <h3>Add Student to {{ selectedCourse?.courseName }}</h3>
         <form [formGroup]="studentEmailForm" (ngSubmit)="addStudentToCourse()">
           <div class="form-group">
-            <label for="studentEmail">Student Email</label>
+            <label for="studentEmail">Student Email <span class="required">*</span></label>
             <input 
               type="email" 
               id="studentEmail" 
               formControlName="studentEmail"
-              placeholder="e.g. student@example.com">
+              required
+              pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+              placeholder="e.g. student@example.com"
+              [class.invalid]="studentEmailForm.get('studentEmail')?.invalid && studentEmailForm.get('studentEmail')?.touched">
             <div class="error" *ngIf="studentEmailForm.get('studentEmail')?.invalid && studentEmailForm.get('studentEmail')?.touched">
-              Valid email is required
+              <span *ngIf="studentEmailForm.get('studentEmail')?.errors?.['required']">Student email is required</span>
+              <span *ngIf="studentEmailForm.get('studentEmail')?.errors?.['pattern']">Please enter a valid email address</span>
             </div>
           </div>
   

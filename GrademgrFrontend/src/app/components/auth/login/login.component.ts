@@ -17,6 +17,8 @@ export class LoginComponent implements OnInit {
   loginForm!: FormGroup;
   errorMessage: string = '';
   submitted = false;
+  showPassword = false;
+  isLoading = false;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -24,10 +26,17 @@ export class LoginComponent implements OnInit {
     private router: Router
   ) {}
 
-  ngOnInit(): void {
+  ngOnInit() {
     this.loginForm = this.formBuilder.group({
-      email: ['', [Validators.required]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
+      email: ['', [
+        Validators.required,
+        Validators.email,
+        Validators.pattern("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
+      ]],
+      password: ['', [
+        Validators.required,
+        Validators.minLength(6)
+      ]]
     });
   }
 
@@ -40,8 +49,10 @@ export class LoginComponent implements OnInit {
       return;
     }
 
-    const email = this.f['email'].value;
-    const password = this.f['password'].value;
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    const { email, password } = this.loginForm.value;
 
     this.userService.login(email, password).subscribe({
       next: response => {
