@@ -5,16 +5,28 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Bson;
 
+/// <summary>
+/// Service that handles all course-related operations including course management, 
+/// student enrollment, and grade management.
+/// </summary>
 public class CourseService : ICourseService
 {
     private readonly DatabaseContext _context;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CourseService"/> class.
+    /// </summary>
+    /// <param name="context">The database context for accessing course, user and grade data.</param>
     public CourseService(DatabaseContext context)
     {
         _context = context;
     }
 
-    // Teacher methods
+    /// <summary>
+    /// Retrieves all courses taught by a specific teacher.
+    /// </summary>
+    /// <param name="teacherEmail">Email address of the teacher.</param>
+    /// <returns>A list of courses taught by the specified teacher.</returns>
     public async Task<List<Course>> GetTeacherCoursesAsync(string teacherEmail)
     {
         var teacher = await _context.Users
@@ -28,6 +40,13 @@ public class CourseService : ICourseService
             .ToListAsync();
     }
 
+    /// <summary>
+    /// Creates a new course with the specified teacher as the instructor.
+    /// </summary>
+    /// <param name="request">Course creation information containing course details.</param>
+    /// <param name="teacherEmail">Email address of the teacher creating the course.</param>
+    /// <returns>The newly created course.</returns>
+    /// <exception cref="Exception">Thrown when the teacher is not found.</exception>
     public async Task<Course> CreateCourseAsync(CreateCourseRequest request, string teacherEmail)
     {
         var teacher = await _context.Users
@@ -51,6 +70,12 @@ public class CourseService : ICourseService
         return course;
     }
 
+    /// <summary>
+    /// Deletes a course and all related grades from the system.
+    /// </summary>
+    /// <param name="courseId">Identifier of the course to delete.</param>
+    /// <param name="teacherEmail">Email address of the teacher requesting deletion.</param>
+    /// <returns>True if the course was successfully deleted; otherwise, false.</returns>
     public async Task<bool> DeleteCourseAsync(string courseId, string teacherEmail)
     {
         var teacher = await _context.Users
@@ -78,6 +103,13 @@ public class CourseService : ICourseService
         return true;
     }
 
+    /// <summary>
+    /// Adds a student to a course's enrollment list.
+    /// </summary>
+    /// <param name="courseId">Identifier of the course.</param>
+    /// <param name="studentEmail">Email address of the student to add.</param>
+    /// <param name="teacherEmail">Email address of the teacher who owns the course.</param>
+    /// <returns>True if the student was successfully added; otherwise, false.</returns>
     public async Task<bool> AddStudentToCourseAsync(string courseId, string studentEmail, string teacherEmail)
     {
         var teacher = await _context.Users
@@ -108,6 +140,13 @@ public class CourseService : ICourseService
         return true;
     }
 
+    /// <summary>
+    /// Removes a student from a course's enrollment list and deletes their associated grades.
+    /// </summary>
+    /// <param name="courseId">Identifier of the course.</param>
+    /// <param name="studentEmail">Email address of the student to remove.</param>
+    /// <param name="teacherEmail">Email address of the teacher who owns the course.</param>
+    /// <returns>True if the student was successfully removed; otherwise, false.</returns>
     public async Task<bool> RemoveStudentFromCourseAsync(string courseId, string studentEmail, string teacherEmail)
     {
         var teacher = await _context.Users
@@ -144,6 +183,13 @@ public class CourseService : ICourseService
         return true;
     }
 
+    /// <summary>
+    /// Retrieves detailed information about a course, with different levels of detail based on user role.
+    /// </summary>
+    /// <param name="courseId">Identifier of the course.</param>
+    /// <param name="userEmail">Email address of the requesting user.</param>
+    /// <param name="role">Role of the requesting user (Teacher or Student).</param>
+    /// <returns>A detailed course response or null if the user doesn't have access to the course.</returns>
     public async Task<CourseDetailResponse> GetCourseDetailsAsync(string courseId, string userEmail, UserRole role)
     {
         var user = await _context.Users
@@ -201,7 +247,11 @@ public class CourseService : ICourseService
         return response;
     }
 
-    // Student methods
+    /// <summary>
+    /// Retrieves all courses in which a student is enrolled.
+    /// </summary>
+    /// <param name="studentEmail">Email address of the student.</param>
+    /// <returns>A list of courses the student is enrolled in.</returns>
     public async Task<List<Course>> GetStudentCoursesAsync(string studentEmail)
     {
         // Find the student by email
@@ -219,7 +269,14 @@ public class CourseService : ICourseService
         return courses;
     }
 
-    // teacher: add student grade to course
+    /// <summary>
+    /// Adds a grade for a student in a specific course.
+    /// </summary>
+    /// <param name="courseId">Identifier of the course.</param>
+    /// <param name="studentEmail">Email address of the student receiving the grade.</param>
+    /// <param name="request">Grade information to add.</param>
+    /// <param name="teacherEmail">Email address of the teacher adding the grade.</param>
+    /// <returns>True if the grade was successfully added; otherwise, false.</returns>
     public async Task<bool> AddGradeToCourseAsync(string courseId, string studentEmail, GradeRequest request, string teacherEmail)
     {
         var teacher = await _context.Users
@@ -261,7 +318,13 @@ public class CourseService : ICourseService
         return true;
     }
 
-    // teacher: add bulk grades to course
+    /// <summary>
+    /// Adds multiple grades for students in a specific course.
+    /// </summary>
+    /// <param name="courseId">Identifier of the course.</param>
+    /// <param name="requests">List of grade requests, each containing student email and grade information.</param>
+    /// <param name="teacherEmail">Email address of the teacher adding the grades.</param>
+    /// <returns>A list of boolean values indicating success or failure for each grade request.</returns>
     public async Task<List<bool>> AddBulkGradesToCourseAsync(string courseId, List<AddGradeRequest> requests, string teacherEmail)
     {
         var teacher = await _context.Users
@@ -316,8 +379,12 @@ public class CourseService : ICourseService
         return results;
     }
 
-    // teacher: get all student grades for course
-
+    /// <summary>
+    /// Retrieves all grades for a specific course with student information for the teacher's view.
+    /// </summary>
+    /// <param name="courseId">Identifier of the course.</param>
+    /// <param name="teacherEmail">Email address of the teacher requesting the grades.</param>
+    /// <returns>A list of grades with student information for the specified course.</returns>
     public async Task<List<GradeWithStudentInfo>> GetGradesForCourseAsync(string courseId, string teacherEmail)
     {
         var teacher = await _context.Users
@@ -355,8 +422,13 @@ public class CourseService : ICourseService
         }).ToList();
     }
 
-    // teacher: delete grade from course
-
+    /// <summary>
+    /// Deletes a grade from a course.
+    /// </summary>
+    /// <param name="courseId">Identifier of the course.</param>
+    /// <param name="gradeId">Identifier of the grade to delete.</param>
+    /// <param name="teacherEmail">Email address of the teacher requesting deletion.</param>
+    /// <returns>True if the grade was successfully deleted; otherwise, false.</returns>
     public async Task<bool> DeleteGradeFromCourseAsync(string courseId, string gradeId, string teacherEmail)
     {
         var teacher = await _context.Users
@@ -382,8 +454,12 @@ public class CourseService : ICourseService
         return true;
     }
 
-    // student: get all grades for all courses
-
+    /// <summary>
+    /// Retrieves all grades for a student across all enrolled courses.
+    /// </summary>
+    /// <param name="studentEmail">Email address of the student.</param>
+    /// <returns>A list of detailed grade information for the student.</returns>
+    /// <exception cref="Exception">Thrown when an error occurs during data retrieval.</exception>
     public async Task<List<GradeDetailsDto>> GetGradesForStudentAsync(string studentEmail)
     {
         try
@@ -468,8 +544,12 @@ public class CourseService : ICourseService
         }
     }
 
-    // student: get all grades for course
-
+    /// <summary>
+    /// Retrieves all grades for a student in a specific course.
+    /// </summary>
+    /// <param name="courseId">Identifier of the course.</param>
+    /// <param name="studentEmail">Email address of the student.</param>
+    /// <returns>A list of grades for the specified student in the course.</returns>
     public async Task<List<Grade>> GetGradesForCourseAsStudentAsync(string courseId, string studentEmail)
     {
         var student = await _context.Users
@@ -489,6 +569,14 @@ public class CourseService : ICourseService
             .ToListAsync();
     }
 
+    /// <summary>
+    /// Updates an existing grade in a course and creates a history record of the change.
+    /// </summary>
+    /// <param name="courseId">Identifier of the course.</param>
+    /// <param name="gradeId">Identifier of the grade to update.</param>
+    /// <param name="request">Updated grade information and reason for change.</param>
+    /// <param name="teacherEmail">Email address of the teacher making the update.</param>
+    /// <returns>True if the grade was successfully updated; otherwise, false.</returns>
     public async Task<bool> UpdateGradeInCourseAsync(string courseId, string gradeId, UpdateGradeRequest request, string teacherEmail)
     {
         var teacher = await _context.Users

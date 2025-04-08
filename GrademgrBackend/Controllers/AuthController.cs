@@ -5,19 +5,39 @@ using System.ComponentModel.DataAnnotations;
 using System.Collections.Generic;
 using System.Linq;
 
+/// <summary>
+/// Controller that handles authentication-related operations such as user registration and login.
+/// </summary>
 [Route("api/[controller]")]
 [ApiController]
 public class AuthController : ControllerBase
 {
+    /// <summary>
+    /// The service responsible for authentication operations.
+    /// </summary>
     private readonly IAuthService _authService;
+    
+    /// <summary>
+    /// The service responsible for security-related operations such as input sanitization.
+    /// </summary>
     private readonly ISecurityService _securityService;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuthController"/> class.
+    /// </summary>
+    /// <param name="authService">The authentication service.</param>
+    /// <param name="securityService">The security service.</param>
     public AuthController(IAuthService authService, ISecurityService securityService)
     {
         _authService = authService;
         _securityService = securityService;
     }
 
+    /// <summary>
+    /// Registers a new user in the system.
+    /// </summary>
+    /// <param name="model">The registration data.</param>
+    /// <returns>A response containing the result of the registration operation.</returns>
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest model)
     {
@@ -75,6 +95,11 @@ public class AuthController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Authenticates a user and generates an access token.
+    /// </summary>
+    /// <param name="model">The login credentials.</param>
+    /// <returns>A response containing the authentication result and access token if successful.</returns>
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest model)
     {
@@ -117,6 +142,10 @@ public class AuthController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Extracts error messages from the ModelState dictionary.
+    /// </summary>
+    /// <returns>A dictionary of field names and their associated error messages.</returns>
     private Dictionary<string, string[]> GetModelStateErrors()
     {
         return ModelState

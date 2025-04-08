@@ -6,6 +6,10 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
+/// <summary>
+/// Controller responsible for handling course-related operations for teachers and students.
+/// Provides endpoints for course management, student enrollment, and grade management.
+/// </summary>
 [Route("api/[controller]")]
 [ApiController]
 [Authorize]
@@ -14,23 +18,37 @@ public class CourseController : ControllerBase
     private readonly ICourseService _courseService;
     private readonly ISecurityService _securityService;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CourseController"/> class.
+    /// </summary>
+    /// <param name="courseService">The service for handling course operations.</param>
+    /// <param name="securityService">The service for handling security operations.</param>
     public CourseController(ICourseService courseService, ISecurityService securityService)
     {
         _courseService = courseService;
         _securityService = securityService;
     }
 
-    // Helper method to get current user email from token
+    /// <summary>
+    /// Extracts the current user's email from their JWT token claims.
+    /// </summary>
+    /// <returns>The email address of the authenticated user.</returns>
     private string GetUserEmail() => User.FindFirst(ClaimTypes.Email)?.Value;
 
-    // Helper method to get current user role from token
+    /// <summary>
+    /// Extracts the current user's role from their JWT token claims.
+    /// </summary>
+    /// <returns>The role of the authenticated user as a UserRole enum.</returns>
     private UserRole GetUserRole()
     {
         var roleString = User.FindFirst(ClaimTypes.Role)?.Value;
         return Enum.Parse<UserRole>(roleString);
     }
 
-    // Helper method to validate and return model state errors
+    /// <summary>
+    /// Extracts validation errors from the ModelState.
+    /// </summary>
+    /// <returns>A dictionary of field names and their corresponding error messages.</returns>
     private Dictionary<string, string[]> GetModelStateErrors()
     {
         return ModelState
@@ -41,7 +59,10 @@ public class CourseController : ControllerBase
             );
     }
 
-    // Check if model state is valid, return BadRequest if not
+    /// <summary>
+    /// Validates the model state and returns an appropriate response if invalid.
+    /// </summary>
+    /// <returns>A BadRequest result with validation errors if the model is invalid; otherwise, null.</returns>
     private IActionResult ValidateModel()
     {
         if (!ModelState.IsValid)
@@ -54,7 +75,13 @@ public class CourseController : ControllerBase
         return null;
     }
 
-    // Teacher Endpoints
+    /// <summary>
+    /// Retrieves all courses taught by the authenticated teacher.
+    /// </summary>
+    /// <returns>A list of courses taught by the teacher.</returns>
+    /// <response code="200">Returns the list of courses.</response>
+    /// <response code="401">If the user is not authenticated.</response>
+    /// <response code="403">If the user is not a teacher.</response>
     [HttpGet("teacher")]
     [Authorize(Policy = "RequireTeacherRole")]
     public async Task<IActionResult> GetTeacherCourses()
@@ -64,6 +91,15 @@ public class CourseController : ControllerBase
         return Ok(courses);
     }
 
+    /// <summary>
+    /// Creates a new course with the authenticated teacher as the instructor.
+    /// </summary>
+    /// <param name="request">The course creation request containing course details.</param>
+    /// <returns>The newly created course.</returns>
+    /// <response code="201">Returns the newly created course.</response>
+    /// <response code="400">If the request is invalid or contains malicious content.</response>
+    /// <response code="401">If the user is not authenticated.</response>
+    /// <response code="403">If the user is not a teacher.</response>
     [HttpPost("create")]
     [Authorize(Policy = "RequireTeacherRole")]
     public async Task<IActionResult> CreateCourse([FromBody] CreateCourseRequest request)
@@ -105,6 +141,16 @@ public class CourseController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Deletes a course and all related grades from the system.
+    /// </summary>
+    /// <param name="id">The identifier of the course to delete.</param>
+    /// <returns>A response indicating success or failure.</returns>
+    /// <response code="204">If the course was successfully deleted.</response>
+    /// <response code="400">If the course ID format is invalid.</response>
+    /// <response code="401">If the user is not authenticated.</response>
+    /// <response code="403">If the user is not a teacher.</response>
+    /// <response code="404">If the course was not found or the user doesn't have permission.</response>
     [HttpDelete("{id}")]
     [Authorize(Policy = "RequireTeacherRole")]
     public async Task<IActionResult> DeleteCourse(string id)
@@ -122,6 +168,16 @@ public class CourseController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>
+    /// Adds a student to a course's enrollment list.
+    /// </summary>
+    /// <param name="courseId">The identifier of the course.</param>
+    /// <param name="request">The request containing the student's email to add.</param>
+    /// <returns>A response indicating success or failure.</returns>
+    /// <response code="200">If the student was successfully added to the course.</response>
+    /// <response code="400">If the request is invalid, the course ID format is invalid, or the operation failed.</response>
+    /// <response code="401">If the user is not authenticated.</response>
+    /// <response code="403">If the user is not a teacher.</response>
     [HttpPost("{courseId}/students")]
     [Authorize(Policy = "RequireTeacherRole")]
     public async Task<IActionResult> AddStudentToCourse(string courseId, [FromBody] AddStudentRequest request)
@@ -153,6 +209,16 @@ public class CourseController : ControllerBase
         return Ok(new { message = "Student added to course" });
     }
 
+    /// <summary>
+    /// Removes a student from a course's enrollment list and deletes their associated grades.
+    /// </summary>
+    /// <param name="courseId">The identifier of the course.</param>
+    /// <param name="studentEmail">The email address of the student to remove.</param>
+    /// <returns>A response indicating success or failure.</returns>
+    /// <response code="200">If the student was successfully removed from the course.</response>
+    /// <response code="400">If the course ID or email format is invalid, or the operation failed.</response>
+    /// <response code="401">If the user is not authenticated.</response>
+    /// <response code="403">If the user is not a teacher.</response>
     [HttpDelete("{courseId}/students/{studentEmail}")]
     [Authorize(Policy = "RequireTeacherRole")]
     public async Task<IActionResult> RemoveStudentFromCourse(string courseId, string studentEmail)
@@ -179,7 +245,13 @@ public class CourseController : ControllerBase
         return Ok(new { message = "Student removed from course" });
     }
 
-    // Student Endpoints
+    /// <summary>
+    /// Retrieves all courses in which the authenticated student is enrolled.
+    /// </summary>
+    /// <returns>A list of courses the student is enrolled in.</returns>
+    /// <response code="200">Returns the list of courses.</response>
+    /// <response code="401">If the user is not authenticated.</response>
+    /// <response code="403">If the user is not a student.</response>
     [HttpGet("student")]
     [Authorize(Policy = "RequireStudentRole")]
     public async Task<IActionResult> GetStudentCourses()
@@ -189,7 +261,16 @@ public class CourseController : ControllerBase
         return Ok(courses);
     }
 
-    // Common Endpoints
+    /// <summary>
+    /// Retrieves detailed information about a course. Teachers get full details including student list,
+    /// while students only get information for courses they're enrolled in.
+    /// </summary>
+    /// <param name="id">The identifier of the course.</param>
+    /// <returns>Detailed information about the course.</returns>
+    /// <response code="200">Returns the course details.</response>
+    /// <response code="400">If the course ID format is invalid.</response>
+    /// <response code="401">If the user is not authenticated.</response>
+    /// <response code="404">If the course was not found or the user doesn't have access.</response>
     [HttpGet("{id}")]
     [Authorize]
     public async Task<IActionResult> GetCourseDetails(string id)
@@ -209,7 +290,16 @@ public class CourseController : ControllerBase
         return Ok(courseDetails);
     }
 
-    // teacher: add student grade to course
+    /// <summary>
+    /// Adds a grade for a student in a specific course.
+    /// </summary>
+    /// <param name="courseId">The identifier of the course.</param>
+    /// <param name="request">The grade information containing the student email, grade value, and assignment name.</param>
+    /// <returns>A response indicating success or failure.</returns>
+    /// <response code="200">If the grade was successfully added.</response>
+    /// <response code="400">If the request is invalid, the course ID format is invalid, or the operation failed.</response>
+    /// <response code="401">If the user is not authenticated.</response>
+    /// <response code="403">If the user is not a teacher.</response>
     [HttpPost("{courseId}/grades")]
     [Authorize(Policy = "RequireTeacherRole")]
     public async Task<IActionResult> AddGradeToCourse(string courseId, [FromBody] AddGradeRequest request)
@@ -251,7 +341,16 @@ public class CourseController : ControllerBase
         return Ok(new { message = "Grade added to course" });
     }
 
-    // teacher: add multiple student grades to course at once
+    /// <summary>
+    /// Adds multiple grades for students in a specific course in a single request.
+    /// </summary>
+    /// <param name="courseId">The identifier of the course.</param>
+    /// <param name="requests">A list of grade requests containing student emails, grade values, and assignment names.</param>
+    /// <returns>A response indicating success or failure for each grade request.</returns>
+    /// <response code="200">If at least some grades were successfully added, with details on success/failure counts.</response>
+    /// <response code="400">If the course ID format is invalid, no grades were provided, or all grade additions failed.</response>
+    /// <response code="401">If the user is not authenticated.</response>
+    /// <response code="403">If the user is not a teacher.</response>
     [HttpPost("{courseId}/grades/bulk")]
     [Authorize(Policy = "RequireTeacherRole")]
     public async Task<IActionResult> AddBulkGradesToCourse(string courseId, [FromBody] List<AddGradeRequest> requests)
@@ -329,7 +428,16 @@ public class CourseController : ControllerBase
         }
     }
 
-    // teacher: get all student grades for course
+    /// <summary>
+    /// Retrieves all grades for a specific course with student information for the teacher's view.
+    /// </summary>
+    /// <param name="courseId">The identifier of the course.</param>
+    /// <returns>A list of grades with student information for the specified course.</returns>
+    /// <response code="200">Returns the list of grades.</response>
+    /// <response code="400">If the course ID format is invalid.</response>
+    /// <response code="401">If the user is not authenticated.</response>
+    /// <response code="403">If the user is not a teacher.</response>
+    /// <response code="404">If no grades were found for the course.</response>
     [HttpGet("{courseId}/grades")]
     [Authorize(Policy = "RequireTeacherRole")]
     public async Task<IActionResult> GetGradesForCourse(string courseId)
@@ -347,7 +455,17 @@ public class CourseController : ControllerBase
         return Ok(grades);
     }
 
-    // teacher: delete student grade from course
+    /// <summary>
+    /// Deletes a grade from a course.
+    /// </summary>
+    /// <param name="courseId">The identifier of the course.</param>
+    /// <param name="gradeId">The identifier of the grade to delete.</param>
+    /// <returns>A response indicating success or failure.</returns>
+    /// <response code="204">If the grade was successfully deleted.</response>
+    /// <response code="400">If the course ID or grade ID format is invalid.</response>
+    /// <response code="401">If the user is not authenticated.</response>
+    /// <response code="403">If the user is not a teacher.</response>
+    /// <response code="404">If the grade was not found or the user doesn't have permission.</response>
     [HttpDelete("{courseId}/grades/{gradeId}")]
     [Authorize(Policy = "RequireTeacherRole")]
     public async Task<IActionResult> DeleteGradeFromCourse(string courseId, string gradeId)
@@ -369,7 +487,17 @@ public class CourseController : ControllerBase
         return NoContent();
     }
 
-    // teacher: update a student grade for a course
+    /// <summary>
+    /// Updates an existing grade in a course and creates a history record of the change.
+    /// </summary>
+    /// <param name="courseId">The identifier of the course.</param>
+    /// <param name="gradeId">The identifier of the grade to update.</param>
+    /// <param name="request">Updated grade information and reason for change.</param>
+    /// <returns>A response indicating success or failure.</returns>
+    /// <response code="200">If the grade was successfully updated.</response>
+    /// <response code="400">If the request is invalid, the course ID or grade ID format is invalid, or the operation failed.</response>
+    /// <response code="401">If the user is not authenticated.</response>
+    /// <response code="403">If the user is not a teacher.</response>
     [HttpPut("{courseId}/grades/{gradeId}")]
     [Authorize(Policy = "RequireTeacherRole")]
     public async Task<IActionResult> UpdateGradeInCourse(string courseId, string gradeId, [FromBody] UpdateGradeRequest request)
@@ -412,7 +540,16 @@ public class CourseController : ControllerBase
         return Ok(new { message = "Grade updated successfully" });
     }
 
-    // student: get all grades for course
+    /// <summary>
+    /// Retrieves all grades for a student in a specific course.
+    /// </summary>
+    /// <param name="courseId">The identifier of the course.</param>
+    /// <returns>A list of grades for the authenticated student in the specified course.</returns>
+    /// <response code="200">Returns the list of grades.</response>
+    /// <response code="400">If the course ID format is invalid.</response>
+    /// <response code="401">If the user is not authenticated.</response>
+    /// <response code="403">If the user is not a student.</response>
+    /// <response code="404">If no grades were found for this student in this course.</response>
     [HttpGet("{courseId}/grades/student")]
     [Authorize(Policy = "RequireStudentRole")]
     public async Task<IActionResult> GetGradesForCourseAsStudent(string courseId)
@@ -430,7 +567,14 @@ public class CourseController : ControllerBase
         return Ok(grades);
     }
 
-    // student: get all grades for all courses
+    /// <summary>
+    /// Retrieves all grades for the authenticated student across all enrolled courses.
+    /// </summary>
+    /// <returns>A list of detailed grade information for the student.</returns>
+    /// <response code="200">Returns the list of grades.</response>
+    /// <response code="401">If the user is not authenticated.</response>
+    /// <response code="403">If the user is not a student.</response>
+    /// <response code="404">If no grades were found for this student.</response>
     [HttpGet("grades")]
     [Authorize(Policy = "RequireStudentRole")]
     public async Task<IActionResult> GetGradesForStudent()
@@ -444,7 +588,14 @@ public class CourseController : ControllerBase
         return Ok(grades);
     }
 
-    // student: get all courses - renamed to avoid confusion with the route parameter
+    /// <summary>
+    /// Retrieves all courses in which the authenticated student is enrolled.
+    /// </summary>
+    /// <returns>A list of courses the student is enrolled in.</returns>
+    /// <response code="200">Returns the list of courses.</response>
+    /// <response code="401">If the user is not authenticated.</response>
+    /// <response code="403">If the user is not a student.</response>
+    /// <response code="404">If no courses were found for this student.</response>
     [HttpGet("student/courses")]
     [Authorize(Policy = "RequireStudentRole")]
     public async Task<IActionResult> GetCoursesForStudent()
