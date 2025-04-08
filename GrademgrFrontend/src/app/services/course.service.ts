@@ -88,6 +88,34 @@ export class CourseService {
     });
   }
 
+  updateGrade(
+    courseId: string, 
+    gradeId: string, 
+    updateData: {
+      assignmentName: string;
+      gradeValue: number;
+      comment?: string;
+      changeReason?: string;
+    }
+  ): Observable<{ message: string }> {
+    if (updateData.gradeValue < 0 || updateData.gradeValue > 10) {
+      throw new Error('Grade value must be between 0 and 10');
+    }
+  
+    const backendRequest = {
+      assignmentName: updateData.assignmentName,
+      gradeValue: updateData.gradeValue,
+      changeReason: updateData.changeReason || 'Grade updated by teacher',
+      comment: updateData.comment
+    };
+  
+    return this.http.put<{ message: string }>(
+      `${this.apiUrl}/${courseId}/grades/${gradeId}`, 
+      backendRequest,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
   getGradesForCourse(courseId: string): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/${courseId}/grades`, {
       headers: this.getAuthHeaders()

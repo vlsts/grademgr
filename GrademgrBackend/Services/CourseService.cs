@@ -512,6 +512,7 @@ public class CourseService : ICourseService
         // Create a grade history record before updating
         var gradeHistory = new GradeHistory
         {
+            Id = ObjectId.GenerateNewId().ToString(),
             GradeId = grade.Id,
             PreviousGrade = grade.GradeValue,
             ChangedAt = DateTime.UtcNow,
