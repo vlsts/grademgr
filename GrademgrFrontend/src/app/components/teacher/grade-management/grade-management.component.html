@@ -76,6 +76,51 @@
                 </form>
             </div>
 
+            <!-- Add this section below the add-grade-card, above the pending grades card -->
+            <div class="card csv-import-card">
+                <div class="card-header">
+                    <h3>Import from CSV</h3>
+                </div>
+                
+                <div class="csv-upload-container">
+                    <div class="csv-format-info">
+                        <p>Upload a CSV file with the following format:</p>
+                        <code>student_email,assignment_name,grade,comment</code>
+                        <p class="csv-note">Comment field is optional. Grades should be between 1-10.</p>
+                    </div>
+                    
+                    <div class="file-drop-zone" 
+                        [class.active]="isDragOver" 
+                        (dragover)="onDragOver($event)" 
+                        (dragleave)="onDragLeave($event)"
+                        (drop)="onFileDrop($event)">
+                        <input type="file" 
+                            #fileInput 
+                            accept=".csv" 
+                            (change)="onFileSelected($event)" 
+                            class="file-input">
+                        <div class="drop-icon">📄</div>
+                        <p>Drag and drop a CSV file here<br> or <span class="browse-text" (click)="fileInput.click()">browse</span> to upload</p>
+                    </div>
+                    
+                    <div *ngIf="csvFile" class="selected-file">
+                        <div class="file-info">
+                            <span class="file-name">{{ csvFile.name }}</span>
+                            <span class="file-size">({{ formatFileSize(csvFile.size) }})</span>
+                        </div>
+                        <button type="button" class="remove-file" (click)="removeCsvFile()">&times;</button>
+                    </div>
+                    
+                    <div *ngIf="csvPreviewCount > 0" class="csv-preview">
+                        <p>Found <strong>{{ csvPreviewCount }}</strong> valid grade entries</p>
+                        <div class="csv-actions">
+                            <button type="button" class="cancel-button" (click)="removeCsvFile()">Cancel</button>
+                            <button type="button" class="import-button" (click)="importCsv()">Import Grades</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Pending Grades Card -->
             <div *ngIf="pendingGrades && pendingGrades.length > 0" class="card pending-grades-card">
                 <div class="card-header">

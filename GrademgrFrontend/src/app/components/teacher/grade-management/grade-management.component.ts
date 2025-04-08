@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CourseService } from '../../../services/course.service';
 import { HttpClientModule } from '@angular/common/http';
+import { ViewChild, ElementRef } from '@angular/core';
 
 interface Grade {
   id: string;
@@ -47,6 +48,12 @@ interface Course {
   styleUrls: ['./grade-management.component.scss']
 })
 export class GradeManagementComponent implements OnInit {
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+  csvFile: File | null = null;
+  csvPreviewCount: number = 0;
+  isDragOver: boolean = false;
+  csvGrades: PendingGrade[] = [];
+  
   courses: Course[] = [];
   selectedCourseId: string | null = null;
   grades: Grade[] = [];
@@ -440,5 +447,183 @@ export class GradeManagementComponent implements OnInit {
     this.filteredGrades = filtered.slice(0, this.pageSize);
     this.totalPages = Math.ceil(filtered.length / this.pageSize);
     this.currentPage = 0;
+  }
+
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragOver = true;
+  }
+  
+  // Handle drag leave event
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragOver = false;
+  }
+  
+  // Handle file drop event
+  onFileDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragOver = false;
+    
+    if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
+      const file = event.dataTransfer.files[0];
+      if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+        this.processCsvFile(file);
+      } else {
+        this.error = 'Please upload a valid CSV file.';
+        setTimeout(() => this.error = '', 5000);
+      }
+    }
+  }
+  
+  // Handle file selection via browser
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.processCsvFile(input.files[0]);
+    }
+  }
+  
+  // Process the CSV file
+  processCsvFile(file: File): void {
+    this.csvFile = file;
+    this.csvGrades = [];
+    
+    // Read the file
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const csvText = e.target?.result as string;
+        const rows = csvText.split('\n').filter(row => row.trim() !== '');
+        
+        // Process each row
+        rows.forEach((row, index) => {
+          // Skip header row if it exists
+          if (index === 0 && row.toLowerCase().includes('email')) {
+            return;
+          }
+          
+          const columns = row.split(',').map(col => col.trim());
+          if (columns.length < 3) {
+            return; // Skip invalid rows
+          }
+          
+          const studentEmail = columns[0];
+          const assignmentName = columns[1];
+          const gradeValue = parseFloat(columns[2]);
+          const comment = columns.length > 3 ? columns[3] : '';
+          
+          // Validate the data
+          if (!studentEmail || !assignmentName || isNaN(gradeValue) || gradeValue < 1 || gradeValue > 10) {
+            return; // Skip invalid data
+          }
+          
+          // Add to the grades array
+          this.csvGrades.push({
+            studentEmail,
+            assignmentName,
+            grade: gradeValue,
+            comment
+          });
+        });
+        
+        // Update the preview count
+        this.csvPreviewCount = this.csvGrades.length;
+        
+        // Show error if no valid grades were found
+        if (this.csvPreviewCount === 0) {
+          this.error = 'No valid grade entries found in the CSV file.';
+          this.csvFile = null;
+          setTimeout(() => this.error = '', 5000);
+        }
+        
+      } catch (error) {
+        console.error('Error processing CSV:', error);
+        this.error = 'Error processing CSV file. Please check the format.';
+        setTimeout(() => this.error = '', 5000);
+        this.csvFile = null;
+        this.csvPreviewCount = 0;
+      }
+    };
+    
+    reader.onerror = () => {
+      this.error = 'Error reading the file. Please try again.';
+      setTimeout(() => this.error = '', 5000);
+      this.csvFile = null;
+    };
+    
+    reader.readAsText(file);
+  }
+  
+  // Remove the selected CSV file
+  removeCsvFile(): void {
+    this.csvFile = null;
+    this.csvPreviewCount = 0;
+    this.csvGrades = [];
+    if (this.fileInput) {
+      this.fileInput.nativeElement.value = '';
+    }
+  }
+  
+  // Format file size for display
+  formatFileSize(bytes: number): string {
+    if (bytes < 1024) {
+      return bytes + ' bytes';
+    } else if (bytes < 1024 * 1024) {
+      return (bytes / 1024).toFixed(1) + ' KB';
+    } else {
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+  }
+  
+  // Import the CSV grades
+  importCsv(): void {
+    if (this.csvGrades.length === 0 || !this.selectedCourseId) {
+      return;
+    }
+    
+    if (confirm(`Are you sure you want to import ${this.csvGrades.length} grades?`)) {
+      this.isLoading = true;
+      this.error = '';
+      this.success = '';
+      
+      // Map the CSV grades to the format expected by the API
+      const gradesToSubmit = this.csvGrades.map(grade => ({
+        studentMail: grade.studentEmail,
+        gradeValue: grade.grade,
+        assignmentName: grade.assignmentName,
+        comment: grade.comment
+      }));
+      
+      // Submit the grades
+      this.courseService.addMultipleGrades(this.selectedCourseId, gradesToSubmit)
+        .subscribe({
+          next: (response) => {
+            if (response && response.success !== undefined) {
+              if (response.failed === 0) {
+                this.success = `Successfully imported all ${response.success} grades from CSV`;
+              } else {
+                this.success = `Imported ${response.success} grades successfully, but ${response.failed} failed`;
+              }
+            } else {
+              this.success = `Grades imported successfully`;
+            }
+            
+            // Clear the CSV file
+            this.removeCsvFile();
+            
+            // Refresh the grades list
+            this.loadGrades(this.selectedCourseId!);
+            this.isLoading = false;
+          },
+          error: (err) => {
+            this.error = 'Failed to import grades: ' + (err.error?.message || err.message || 'Unknown error');
+            this.isLoading = false;
+          }
+        });
+    }
   }
 }
