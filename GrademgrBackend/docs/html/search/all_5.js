@@ -1,0 +1,26 @@
+var searchData=
+[
+  ['getcoursedetails_0',['GetCourseDetails',['../class_course_controller.html#a16fe2072442f60da40434997d7b098b7',1,'CourseController']]],
+  ['getcoursedetailsasync_1',['GetCourseDetailsAsync',['../class_course_service.html#a19d06ae83b403d3245f86432d1bfb650',1,'CourseService']]],
+  ['getcoursesforstudent_2',['GetCoursesForStudent',['../class_course_controller.html#a04fa91c95e164420e6f4d6710a8e339a',1,'CourseController']]],
+  ['getgradesforcourse_3',['GetGradesForCourse',['../class_course_controller.html#ab9c7a40a2d2089e763bd799ab9d9f38c',1,'CourseController']]],
+  ['getgradesforcourseasstudent_4',['GetGradesForCourseAsStudent',['../class_course_controller.html#a73eecb8b0d873393f7d69bb59f8fc217',1,'CourseController']]],
+  ['getgradesforcourseasstudentasync_5',['GetGradesForCourseAsStudentAsync',['../class_course_service.html#a1b742eef1c5a1788036635ff1dc85bdb',1,'CourseService']]],
+  ['getgradesforcourseasync_6',['GetGradesForCourseAsync',['../class_course_service.html#a92ff13d9a20bfee2d07a26e32bf5068c',1,'CourseService']]],
+  ['getgradesforstudent_7',['GetGradesForStudent',['../class_course_controller.html#ac4506a6d15e8ebd31079c34f3eeb2df0',1,'CourseController']]],
+  ['getgradesforstudentasync_8',['GetGradesForStudentAsync',['../class_course_service.html#a97198bdf96cab89b6bcb7bd36d740e41',1,'CourseService']]],
+  ['getstudentcourses_9',['GetStudentCourses',['../class_course_controller.html#ab33885134c04d4fcb4fd347347101676',1,'CourseController']]],
+  ['getstudentcoursesasync_10',['GetStudentCoursesAsync',['../class_course_service.html#a439d9208426ce7d08ee25211bf01d65e',1,'CourseService']]],
+  ['getteachercourses_11',['GetTeacherCourses',['../class_course_controller.html#ad5329091314063ff5e6715454765cc50',1,'CourseController']]],
+  ['getteachercoursesasync_12',['GetTeacherCoursesAsync',['../class_course_service.html#a6775c1699cc293ff1425e97dd2814b4c',1,'CourseService']]],
+  ['grade_13',['Grade',['../class_grade.html',1,'']]],
+  ['gradedetailsdto_14',['GradeDetailsDto',['../class_grade_details_dto.html',1,'']]],
+  ['gradehistory_15',['GradeHistory',['../class_grade_history.html',1,'']]],
+  ['gradeid_16',['GradeId',['../class_grade_history.html#a39ebeac0389dbc2128cad89a371ef437',1,'GradeHistory']]],
+  ['grademgrbackend_17',['GrademgrBackend',['../namespace_grademgr_backend.html',1,'']]],
+  ['grademgrbackend_3a_3acontrollers_18',['Controllers',['../namespace_grademgr_backend_1_1_controllers.html',1,'GrademgrBackend']]],
+  ['grademgrbackend_3a_3atests_19',['Tests',['../namespace_grademgr_backend_1_1_tests.html',1,'GrademgrBackend']]],
+  ['graderequest_20',['GradeRequest',['../class_grade_request.html',1,'']]],
+  ['gradevalue_21',['GradeValue',['../class_grade.html#ac57e325b100a9bb3b12d1a5c734d1290',1,'Grade.GradeValue'],['../class_grade_request.html#aa78d82a9dab5e156f598a013b906893f',1,'GradeRequest.GradeValue'],['../class_grade_details_dto.html#a2dc5f3ad146865a864f8fc1e8d2b2bb3',1,'GradeDetailsDto.GradeValue']]],
+  ['gradewithstudentinfo_22',['GradeWithStudentInfo',['../class_grade_with_student_info.html',1,'']]]
+];
