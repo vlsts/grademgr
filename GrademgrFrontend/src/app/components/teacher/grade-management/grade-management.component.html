@@ -71,13 +71,108 @@
                     
                     <div class="form-actions">
                         <button type="submit" class="submit-button" [disabled]="!newGrade.studentEmail || !newGrade.grade || !newGrade.assignmentName">Add Grade</button>
+                        <button type="button" class="add-to-batch-button" (click)="addToBatch()" [disabled]="!newGrade.studentEmail || !newGrade.grade || !newGrade.assignmentName">Add to Batch</button>
                     </div>
                 </form>
             </div>
 
+            <!-- Pending Grades Card -->
+            <div *ngIf="pendingGrades && pendingGrades.length > 0" class="card pending-grades-card">
+                <div class="card-header">
+                    <h3>Pending Grades</h3>
+                    <span class="badge">{{ pendingGrades.length }}</span>
+                </div>
+                
+                <div class="table-container">
+                    <table class="grades-table">
+                        <thead>
+                            <tr>
+                                <th>Student Email</th>
+                                <th>Assignment</th>
+                                <th>Grade</th>
+                                <th>Comment</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let grade of pendingGrades; let i = index" 
+                                class="pending-row"
+                                [class.editing]="grade.isEditing"
+                                [class.highlighted]="grade.isHighlighted">
+                                
+                                <!-- View Mode -->
+                                <ng-container *ngIf="!grade.isEditing">
+                                    <td>{{grade.studentEmail}}</td>
+                                    <td>{{grade.assignmentName}}</td>
+                                    <td>{{grade.grade}}</td>
+                                    <td class="comment-cell">{{grade.comment || '-'}}</td>
+                                    <td class="actions">
+                                        <button class="icon-button edit" (click)="editPendingGrade(i)" title="Edit grade">✏️</button>
+                                        <button class="icon-button delete" (click)="removePendingGrade(i)" title="Remove from batch">🗑️</button>
+                                    </td>
+                                </ng-container>
+                                
+                                <!-- Edit Mode -->
+                                <ng-container *ngIf="grade.isEditing">
+                                    <td>
+                                        <input 
+                                            type="email" 
+                                            class="edit-input"
+                                            [(ngModel)]="grade.studentEmail" 
+                                            name="edit-email-{{i}}"
+                                            required
+                                        >
+                                    </td>
+                                    <td>
+                                        <input 
+                                            type="text" 
+                                            class="edit-input"
+                                            [(ngModel)]="grade.assignmentName" 
+                                            name="edit-assignment-{{i}}"
+                                            required
+                                        >
+                                    </td>
+                                    <td>
+                                        <input 
+                                            type="number" 
+                                            class="edit-input"
+                                            [(ngModel)]="grade.grade" 
+                                            name="edit-grade-{{i}}"
+                                            min="1" 
+                                            max="10" 
+                                            step="0.1"
+                                            required
+                                        >
+                                    </td>
+                                    <td>
+                                        <input 
+                                            type="text" 
+                                            class="edit-input"
+                                            [(ngModel)]="grade.comment" 
+                                            name="edit-comment-{{i}}"
+                                        >
+                                    </td>
+                                    <td class="actions">
+                                        <button class="icon-button save" (click)="savePendingGradeEdit(i)" title="Save changes">✓</button>
+                                        <button class="icon-button cancel" (click)="cancelPendingGradeEdit(i)" title="Cancel edit">✗</button>
+                                    </td>
+                                </ng-container>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="batch-actions">
+                    <button class="cancel-batch-button" (click)="clearPendingGrades()">Cancel All</button>
+                    <button class="submit-batch-button" (click)="submitBatch()">Submit All Grades</button>
+                </div>
+            </div>
+
             <!-- All Grades Card -->
             <div class="card grades-card">
-                <h3>All Grades</h3>
+                <div class="card-header">
+                    <h3>All Grades</h3>
+                </div>
                 
                 <div class="search-container">
                     <input 

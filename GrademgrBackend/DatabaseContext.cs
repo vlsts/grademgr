@@ -4,7 +4,9 @@ using MongoDB.EntityFrameworkCore.Extensions;
 
 public class DatabaseContext : DbContext
 {
-    public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options) { }
+    public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options) {
+        Database.AutoTransactionBehavior = AutoTransactionBehavior.Never;
+     }
 
     public static DatabaseContext Create(IMongoDatabase database) =>
         new(new DbContextOptionsBuilder<DatabaseContext>()
@@ -21,4 +23,11 @@ public class DatabaseContext : DbContext
         modelBuilder.Entity<Course>().ToCollection("courses");
         modelBuilder.Entity<Grade>().ToCollection("grades");
     }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        base.OnConfiguring(optionsBuilder);
+        Database.AutoTransactionBehavior = AutoTransactionBehavior.Never;
+    }
+
 }
