@@ -16,12 +16,14 @@ public class DatabaseContext : DbContext
     public DbSet<User> Users { get; set; }
     public DbSet<Course> Courses { get; set; }
     public DbSet<Grade> Grades { get; set; }
+    public DbSet<GradeHistory> GradeHistories { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<User>().ToCollection("users");
         modelBuilder.Entity<Course>().ToCollection("courses");
         modelBuilder.Entity<Grade>().ToCollection("grades");
+        modelBuilder.Entity<GradeHistory>().ToCollection("gradehistories");
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
