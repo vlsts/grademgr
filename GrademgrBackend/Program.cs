@@ -8,13 +8,17 @@ var builder = WebApplication.CreateBuilder(args);
 
 var mongoDbConnectionString = Environment.GetEnvironmentVariable("MONGODB_URI") ?? "mongodb://localhost:27017";
 
-var mongoClient = new MongoClient(mongoDbConnectionString);
-var mongoDatabase = mongoClient.GetDatabase("grade_manager_db");
+// Register MongoDB client as a singleton (connection is thread-safe)
+builder.Services.AddSingleton<IMongoClient>(sp => 
+    new MongoClient(mongoDbConnectionString));
 
-InitializeDatabase(mongoDatabase);
+// Register MongoDB database as a singleton
+builder.Services.AddSingleton(sp => 
+    sp.GetRequiredService<IMongoClient>().GetDatabase("grade_manager_db"));
 
-var db = DatabaseContext.Create(mongoDatabase);
-builder.Services.AddSingleton(db);
+// Register DatabaseContext as scoped, but using the singleton database
+builder.Services.AddScoped(sp => 
+    DatabaseContext.Create(sp.GetRequiredService<IMongoDatabase>()));
 
 // Add JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
