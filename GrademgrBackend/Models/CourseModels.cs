@@ -1,8 +1,12 @@
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 public class CreateCourseRequest
 {
+    [Required(ErrorMessage = "Course name is required")]
     public string CourseName { get; set; }
+
+    [Required(ErrorMessage = "Course code is required")]
     public string CourseCode { get; set; }
     public string Description { get; set; }
 }
@@ -28,5 +32,7 @@ public class StudentInfo
 
 public class AddStudentRequest
 {
+    [Required(ErrorMessage = "Student email is required")]
+    [EmailAddress(ErrorMessage = "Please provide a valid email address")]
     public string StudentEmail { get; set; }
 }
